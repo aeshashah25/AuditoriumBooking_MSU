@@ -1,0 +1,74 @@
+/* General Calendar Styling */
+.custom-calendar {
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #f8f8f8;
+  padding: 10px;
+  max-width: 100%; /* Ensure it scales on smaller screens */
+}
+
+/* Navigation Buttons */
+.custom-calendar .react-calendar__navigation button {
+  color: #954535;
+  font-size: 16px;
+  font-weight: bold;
+  background: none;
+  border: none;
+  margin: 0 4px;
+  padding: 8px;
+}
+
+/* Calendar Tiles */
+.custom-calendar .react-calendar__tile {
+  border-radius: 12px;
+  background: #ffffff;
+  transition: all 0.3s ease;
+}
+
+/* Hover Effect for Tiles */
+.custom-calendar .react-calendar__tile:hover {
+  background: #e3f2fd;
+}
+
+/* Highlight Today's Date */
+.custom-calendar .highlighted-today {
+  background-color: #ff726f !important;
+  color: white;
+  font-weight: bold;
+  border: 1px solid #ffcccb;
+  transition: all 0.3s ease;
+}
+
+/* Hover Effect for Today's Date */
+.custom-calendar .highlighted-today:hover {
+  background-color: #ff5a4f !important;
+}
+
+/* Highlight Sundays */
+.custom-calendar .highlighted-sunday {
+  color: #ff0000;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+/* Hover Effect for Sundays */
+.custom-calendar .highlighted-sunday:hover {
+  color: #ff0000;
+}
+
+/* Active Tile */
+.custom-calendar .react-calendar__tile--active {
+  background: #954535;
+  color: #fff;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+  .custom-calendar {
+    font-size: 12px; /* Scale down font size */
+  }
+  .custom-calendar .react-calendar__navigation button {
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,107 @@
+.feedback-container {
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-feedback-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+  }
+  
+  .form-section {
+    flex: 0 0 48%; /* Takes up 48% of the space */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  .feedback-form {
+    margin-bottom: 30px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  label {
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 5px;
+    display: block;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  
+  .form-control:focus {
+    border-color: #007bff;
+    outline: none;
+  }
+  
+  .error {
+    color: red;
+    font-size: 12px;
+  }
+  
+  .submit-button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    width: 100%;
+    cursor: pointer;
+  }
+  
+  .submit-button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Feedback Cards Section */
+  .feedback-cards-section {
+    flex: 0 0 48%; /* Takes up 48% of the space */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .feedback-cards {
+    margin-top: 30px;
+  }
+  
+  .feedback-card {
+    background-color: #fff;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .feedback-card h4 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .feedback-card p {
+    margin: 5px 0;
+  }
+  

@@ -1,0 +1,204 @@
+{
+  "auditoriums": [
+    {
+      "id": 1,
+      "name": "Dr. B. R. AMBEDKAR HALL",
+      "description": "A spacious auditorium with a capacity of 200, located in the Faculty of Social Work. It is equipped with a projector, sound system, Wi-Fi, and air conditioning, making it ideal for large conferences, seminars, and meetings.",
+      "capacity": 200,
+      "location": "Faculty of Social Work",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/Dr.B.R.AMBEDKAR.png",
+      "price_per_hour": 500,
+      "price_per_day": 4000
+    },
+    {
+      "id": 2,
+      "name": "Deep Auditorium",
+      "description": "This 150-capacity auditorium located in the Faculty of Commerce offers modern amenities including a projector, sound system, Wi-Fi, and air conditioning. It’s perfect for smaller gatherings and workshops.",
+      "capacity": 150,
+      "location": "Faculty of Commerce",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/DEEP.png",
+      "price_per_hour": 450,
+      "price_per_day": 3500
+    },
+    {
+      "id": 3,
+      "name": "Mcom Auditorium",
+      "description": "Located in the Faculty of Commerce, this 300-capacity auditorium comes with extra features like stage lighting in addition to standard amenities. It's a great venue for larger events such as conferences and performances.",
+      "capacity": 300,
+      "location": "Faculty of Commerce",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC", "Stage Lighting"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/MCOM.png",
+      "price_per_hour": 600,
+      "price_per_day": 4800
+    },
+    {
+      "id": 4,
+      "name": "M.K Amin Auditorium",
+      "description": "Located in M.K Amin Padra, this intimate 120-capacity auditorium offers essential amenities like sound system, Wi-Fi, and air conditioning. Ideal for smaller events and gatherings.",
+      "capacity": 120,
+      "location": "M.K Amin Padra",
+      "amenities": ["Sound System", "Wi-Fi", "AC"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "Closed",
+        "sunday": "Closed"
+      },
+      "image": "/images/M.K.Amin.png",
+      "price_per_hour": 350,
+      "price_per_day": 2500
+    },
+    {
+      "id": 5,
+      "name": "DR. Mrunalinidevi Puar Auditorium",
+      "description": "Located in the Faculty of Family Community Science, this 250-capacity auditorium is equipped with a projector, sound system, Wi-Fi, AC, and stage lighting, offering a great space for a variety of events.",
+      "capacity": 250,
+      "location": "Faculty of Family Community Science",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC", "Stage Lighting"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/DR.Mrunalidevi Puar.png",
+      "price_per_hour": 550,
+      "price_per_day": 4400
+    },
+    {
+      "id": 6,
+      "name": "ILG MDC Auditorium",
+      "description": "A large 350-capacity auditorium located in the Faculty of Management Studies. It features premium amenities like VIP seating, stage lighting, and modern audio-visual equipment, making it perfect for high-profile events.",
+      "capacity": 350,
+      "location": "Faculty of Management Studies",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC", "Stage Lighting", "VIP Seating"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/ILG_AUDT.png",
+      "price_per_hour": 700,
+      "price_per_day": 5600
+    },
+    {
+      "id": 7,
+      "name": "Pandit Deendayal Upadhyay Auditorium",
+      "description": "Located in the Faculty of Management Studies, this 400-capacity auditorium offers state-of-the-art facilities including a green room, stage lighting, and VIP seating. It's perfect for larger events and conferences.",
+      "capacity": 400,
+      "location": "Faculty of Management Studies",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC", "Stage Lighting", "Green Room"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/PDDUAudt.png",
+      "price_per_hour": 750,
+      "price_per_day": 6000
+    },
+    {
+      "id": 8,
+      "name": "Sir M. Visvesvaraya Auditorium",
+      "description": "A 180-capacity auditorium in the Faculty of Technology and Engineering, equipped with a projector, sound system, Wi-Fi, and air conditioning. It is ideal for medium-sized conferences and seminars.",
+      "capacity": 180,
+      "location": "Faculty of Technology and Engineering",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "Closed",
+        "sunday": "Closed"
+      },
+      "image": "/images/MVAudt.png",
+      "price_per_hour": 400,
+      "price_per_day": 3200
+    },
+    {
+      "id": 9,
+      "name": "Chemical Auditorium",
+      "description": "This 220-capacity auditorium is located in the Faculty of Technology and Engineering and comes with a projector, sound system, Wi-Fi, and air conditioning, making it an ideal space for educational events.",
+      "capacity": 220,
+      "location": "Faculty of Technology and Engineering",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/CheAudt.png",
+      "price_per_hour": 500,
+      "price_per_day": 4000
+    },
+    {
+      "id": 10,
+      "name": "C C Mehta Auditorium",
+      "description": "This large 500-capacity auditorium located in the Faculty of Commerce is equipped with a projector, sound system, Wi-Fi, AC, stage lighting, green room, and VIP seating, making it perfect for prestigious events.",
+      "capacity": 500,
+      "location": "Faculty of Commerce",
+      "amenities": ["Projector", "Sound System", "Wi-Fi", "AC", "Stage Lighting", "Green Room", "VIP Seating"],
+      "availability": {
+        "monday": "9:00 AM - 9:00 PM",
+        "tuesday": "9:00 AM - 9:00 PM",
+        "wednesday": "9:00 AM - 9:00 PM",
+        "thursday": "9:00 AM - 9:00 PM",
+        "friday": "9:00 AM - 9:00 PM",
+        "saturday": "10:00 AM - 6:00 PM",
+        "sunday": "Closed"
+      },
+      "image": "/images/CCMehtaAudt.png",
+      "price_per_hour": 800,
+      "price_per_day": 6400
+    }
+  ]
+}
