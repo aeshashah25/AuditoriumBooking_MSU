@@ -85,14 +85,14 @@ function Auditourim() {
                       <strong>Amenities:</strong> {amenitiesList}
                     </p>
 
-                    <div className="mt-4 flex justify-center">
+                    {/* <div className="mt-4 flex justify-center">
                       <Link
                         to={`/auditorium/${auditorium.id}`}
                         className="bg-[#8B4513] text-white px-6 py-2 rounded-lg hover:bg-[#A0522D] transition duration-300"
                       >
                         More Info
                       </Link>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Back Side */}
@@ -103,7 +103,7 @@ function Auditourim() {
                                  hover:bg-gray-200 hover:shadow-xl transition duration-300 transform hover:scale-105"
                       onClick={() => navigate(`/auditorium/${auditorium.id}`)}
                     >
-                      📅 View More Bookings
+                      📅 View More Details
                     </button>
                   </div>
                 </div>
@@ -126,4 +126,4 @@ function Auditourim() {
 }
 
 
-export default Auditourim;
+export default Auditourim; 

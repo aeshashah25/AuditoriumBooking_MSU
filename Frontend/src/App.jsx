@@ -42,7 +42,7 @@ const App = () => {
           <Route path="/feedback" element={<Feedback />} />
           <Route path="/auditourim" element={<Auditourim />} />
           <Route path="/auditorium/:id" element={<AuditoriumDetail />} />
-          <Route path="/bookAuditourim/:id" element={<BookAuditorium />} />
+          <Route path="/book-auditorium/:id" element={<BookAuditorium />} />
           <Route path="/UpdateProfile" element={<UpdateProfile />} />
           <Route path="/ViewAuditoriums" element={<ViewAuditoriums/>}/>
           <Route path="/ViewBookingRequest" element={<ViewBookingRequest/>}/>

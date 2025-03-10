@@ -28,19 +28,33 @@ const poolPromise = new sql.ConnectionPool({
 app.get('/get-existing-bookings', async (req, res) => {
   try {
     const pool = await poolPromise;
-    const { date, auditorium_id } = req.query;
-    if (!date || !auditorium_id) {
-      return res.status(400).json({ message: "Invalid date or auditorium_id" });
+    const { start_date, end_date, auditorium_id } = req.query;
+
+    // Validate inputs
+    if (!start_date || !end_date || !auditorium_id) {
+      return res.status(400).json({ message: "Invalid start_date, end_date, or auditorium_id" });
     }
 
+    // Fetch bookings for the given date range and auditorium
     const result = await pool.request()
-      .input('Date', sql.Date, date)
+      .input('StartDate', sql.Date, start_date)
+      .input('EndDate', sql.Date, end_date)
       .input('AuditoriumId', sql.Int, auditorium_id)
-      .query('SELECT start_time, end_time FROM bookings WHERE date = @Date AND AuditoriumID = @AuditoriumId');
+      .query(`
+        SELECT start_date, end_date, start_time, end_time, event_name, amenities
+        FROM bookings 
+        WHERE start_date >= @StartDate AND end_date <= @EndDate
+          AND AuditoriumID = @AuditoriumId
+      `);
 
+    // Format the response
     const bookings = result.recordset.map(booking => ({
-      start_time: formatTimeFromSQL(booking.start_time), // Use formatTimeFromSQL
+      start_date: booking.start_date,
+      end_date: booking.end_date,
+      start_time: formatTimeFromSQL(booking.start_time),
       end_time: formatTimeFromSQL(booking.end_time),
+      event_name: booking.event_name,
+      amenities: booking.amenities ? booking.amenities.split(", ") : [], // Convert string to array
     }));
 
     res.json({ bookings });
@@ -64,45 +78,35 @@ function formatTimeFromSQL(timeString) {
 
 // Route for booking the auditorium
 app.post('/book-auditorium', async (req, res) => {
-  const { user_id, date, start_time, end_time, auditorium_id, event_name } = req.body;
-
-  console.log('Received booking request:', req.body);
-
-  if (!user_id || !date || !start_time || !end_time || !auditorium_id || !event_name) {
-    return res.status(400).json({ message: 'Please provide all booking details.' });
-  }
-
   try {
-    // Ensure times are in the correct format for SQL
-    const sqlStartTime = formatTimeToSQL(start_time);
-    const sqlEndTime = formatTimeToSQL(end_time);
+    console.log("🔵 Received Booking Data:", req.body); // ✅ Debugging Step 1
 
-    console.log(`Formatted Times: Start - ${sqlStartTime}, End - ${sqlEndTime}`);
-    console.log('Executing query with parameters:', {
-      UserId: user_id,
-      Date: date,
-      StartTime: sqlStartTime,
-      EndTime: sqlEndTime,
-      AuditoriumId: auditorium_id,
-      EventName: event_name
-    });
+    const { user_id, start_date, end_date, start_time, end_time, auditorium_id, event_name, amenities, total_price } = req.body;
+
+    if (!user_id || !start_date || !end_date || !start_time || !end_time || !auditorium_id || !event_name || total_price === undefined) {
+      return res.status(400).json({ message: '❌ Missing required fields!' });
+    }
 
     const pool = await poolPromise;
     await pool.request()
       .input('UserId', sql.Int, user_id)
-      .input('Date', sql.Date, date)
-      .input('StartTime', sql.VarChar, sqlStartTime) // Pass the time in proper format
-      .input('EndTime', sql.VarChar, sqlEndTime)
+      .input('StartDate', sql.Date, start_date)
+      .input('EndDate', sql.Date, end_date)
+      .input('StartTime', sql.VarChar, start_time)
+      .input('EndTime', sql.VarChar, end_time)
       .input('AuditoriumId', sql.Int, auditorium_id)
       .input('EventName', sql.VarChar, event_name)
-      .execute('InsertBooking'); // Assuming the stored procedure is defined in SQL Server
+      .input('Amenities', sql.NVarChar, amenities ? amenities.join(", ") : "")
+      .input('TotalAmount', sql.Decimal(10, 2), total_price)
+      .execute('InsertBooking');
 
-    res.status(200).json({ message: 'Booking Request Sent Successfully' });
+    res.status(200).json({ message: '✅ Booking Created Successfully' });
   } catch (err) {
-    console.error('Error during booking:', err);
-    res.status(500).json({ message: 'Error during booking', error: err.message });
+    console.error("❌ Error inserting booking:", err); // ✅ Debugging Step 2
+    res.status(500).json({ message: 'Internal Server Error', error: err.message });
   }
 });
+
 
 function formatTimeToSQL(timeString) {
   // Debug: Log the original time string

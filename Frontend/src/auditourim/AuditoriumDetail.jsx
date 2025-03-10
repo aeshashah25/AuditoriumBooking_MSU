@@ -103,11 +103,11 @@ function AuditoriumDetail() {
   
             {/* Book Button */}
             <button
-              onClick={() => setFlip(true)}
-              className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-md text-lg"
-            >
-              Book Auditorium
-            </button>
+  onClick={() => navigate(`/book-auditorium/${auditorium.id}`, { state: { auditorium } })}
+  className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white p-3 rounded-md text-lg"
+>
+  Book Auditorium
+</button>
           </motion.div>
         ) : (
           // Booking Form Flip Card
