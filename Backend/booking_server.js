@@ -21,48 +21,66 @@ const poolPromise = new sql.ConnectionPool({
   }
 }).connect();
 
-// ✅ Format Time Helper Function (Move this outside the routes to use in both)
-
-// Route for checking existing bookings
-// Endpoint to get existing bookings for a given date and auditorium
-app.get('/get-existing-bookings', async (req, res) => {
+app.get("/booked-slots/:auditoriumId", async (req, res) => {
   try {
+    const { auditoriumId } = req.params;
     const pool = await poolPromise;
-    const { start_date, end_date, auditorium_id } = req.query;
 
-    // Validate inputs
-    if (!start_date || !end_date || !auditorium_id) {
-      return res.status(400).json({ message: "Invalid start_date, end_date, or auditorium_id" });
+    // ✅ Fetch JSON column from MSSQL
+    const query = `
+      SELECT Dates
+      FROM bookings 
+      WHERE AuditoriumID = @auditoriumId 
+      AND booking_status IN ('pending', 'approved')
+    `;
+
+    const result = await pool.request()
+      .input('auditoriumId', sql.Int, auditoriumId)
+      .query(query);
+
+    // ✅ Return empty object if no bookings found
+    if (!result.recordset || result.recordset.length === 0) {
+      return res.status(200).json({});
     }
 
-    // Fetch bookings for the given date range and auditorium
-    const result = await pool.request()
-      .input('StartDate', sql.Date, start_date)
-      .input('EndDate', sql.Date, end_date)
-      .input('AuditoriumId', sql.Int, auditorium_id)
-      .query(`
-        SELECT start_date, end_date, start_time, end_time, event_name, amenities
-        FROM bookings 
-        WHERE start_date >= @StartDate AND end_date <= @EndDate
-          AND AuditoriumID = @AuditoriumId
-      `);
+    let bookedSlots = {};
 
-    // Format the response
-    const bookings = result.recordset.map(booking => ({
-      start_date: booking.start_date,
-      end_date: booking.end_date,
-      start_time: formatTimeFromSQL(booking.start_time),
-      end_time: formatTimeFromSQL(booking.end_time),
-      event_name: booking.event_name,
-      amenities: booking.amenities ? booking.amenities.split(", ") : [], // Convert string to array
-    }));
+    // ✅ Process each booking entry
+    result.recordset.forEach((booking) => {
+      if (!booking.Dates) return; // ✅ Skip if Dates is NULL
 
-    res.json({ bookings });
+      try {
+        let parsedDates = JSON.parse(booking.Dates); // ✅ Parse JSON from Dates column
+        
+        if (!Array.isArray(parsedDates)) {
+          throw new Error("Invalid JSON structure");
+        }
+
+        parsedDates.forEach((entry) => {
+          if (!entry.date || !Array.isArray(entry.time_slots)) {
+            console.warn("⚠️ Invalid entry in Dates column:", entry);
+            return;
+          }
+
+          if (!bookedSlots[entry.date]) {
+            bookedSlots[entry.date] = [];
+          }
+          bookedSlots[entry.date].push(...entry.time_slots);
+        });
+
+      } catch (err) {
+        console.error("❌ JSON Parsing Error:", err);
+      }
+    });
+
+    res.status(200).json(bookedSlots); // ✅ Send final response OUTSIDE loop
+
   } catch (error) {
-    console.error("Error fetching bookings:", error);
-    res.status(500).json({ message: "Error fetching bookings. Please try again." });
+    console.error("❌ Server Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 
 // Helper function to format time from SQL (Date string)
@@ -79,54 +97,37 @@ function formatTimeFromSQL(timeString) {
 // Route for booking the auditorium
 app.post('/book-auditorium', async (req, res) => {
   try {
-    console.log("🔵 Received Booking Data:", req.body); // ✅ Debugging Step 1
+    console.log("🔵 Received Booking Data:", req.body); // Debugging Step 1
 
-    const { user_id, start_date, end_date, start_time, end_time, auditorium_id, event_name, amenities, total_price } = req.body;
+    const { user_id, auditorium_id, event_name, dates, amenities, total_price } = req.body;
 
-    if (!user_id || !start_date || !end_date || !start_time || !end_time || !auditorium_id || !event_name || total_price === undefined) {
+    if (!user_id || !auditorium_id || !event_name || !dates || dates.length === 0 || total_price === undefined) {
       return res.status(400).json({ message: '❌ Missing required fields!' });
     }
 
     const pool = await poolPromise;
+
+    // Convert the dates array into a JSON string for storage
+    const datesJson = JSON.stringify(dates);
+
     await pool.request()
       .input('UserId', sql.Int, user_id)
-      .input('StartDate', sql.Date, start_date)
-      .input('EndDate', sql.Date, end_date)
-      .input('StartTime', sql.VarChar, start_time)
-      .input('EndTime', sql.VarChar, end_time)
       .input('AuditoriumId', sql.Int, auditorium_id)
       .input('EventName', sql.VarChar, event_name)
+      .input('Dates', sql.NVarChar, datesJson) // Store dates as JSON
       .input('Amenities', sql.NVarChar, amenities ? amenities.join(", ") : "")
       .input('TotalAmount', sql.Decimal(10, 2), total_price)
-      .execute('InsertBooking');
+      .execute('InsertBooking'); // Call stored procedure
 
     res.status(200).json({ message: '✅ Booking Created Successfully' });
   } catch (err) {
-    console.error("❌ Error inserting booking:", err); // ✅ Debugging Step 2
+    console.error("❌ Error inserting booking:", err); // Debugging Step 2
     res.status(500).json({ message: 'Internal Server Error', error: err.message });
   }
 });
 
 
-function formatTimeToSQL(timeString) {
-  // Debug: Log the original time string
-  console.log('Original timeString:', timeString);
 
-  // Ensure the input is in 'HH:mm' format and convert it to 'HH:mm:ss'
-  if (timeString.length === 5) {
-    const formattedTime = `${timeString}:00`;
-
-    // Debug: Log the formatted time before returning
-    console.log('Formatted time:', formattedTime);
-
-    return formattedTime;
-  }
-
-  // Debug: Log when no formatting is needed
-  console.log('No formatting needed, returning:', timeString);
-
-  return timeString;
-}
 
 // ✅ GET all auditoriums
 app.get('/get-auditoriums', async (req, res) => {
@@ -173,31 +174,7 @@ app.get('/admin/view-pending-booking-requests', async (req, res) => {
   }
 });
 
-// ✅ GET: Fetch price per hour of an auditorium
-app.get('/get-auditorium-price/:auditoriumId', async (req, res) => {
-  let { auditoriumId } = req.params;
 
-  auditoriumId = Number(auditoriumId);
-  if (isNaN(auditoriumId)) {
-    return res.status(400).json({ error: 'Invalid auditorium ID' });
-  }
-
-  try {
-    const pool = await poolPromise;
-    const result = await pool.request()
-      .input('auditoriumId', sql.Int, auditoriumId)
-      .query('SELECT price_per_hour FROM auditoriums WHERE id = @auditoriumId');
-
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ message: 'Auditorium not found' });
-    }
-
-    res.status(200).json({ pricePerHour: result.recordset[0].price_per_hour });
-  } catch (error) {
-    console.error('Error fetching auditorium price:', error);
-    res.status(500).json({ message: 'Error fetching auditorium price' });
-  }
-});
 
 //admin View Payment Status
 app.get('/admin/view-payment-status', async (req, res) => {

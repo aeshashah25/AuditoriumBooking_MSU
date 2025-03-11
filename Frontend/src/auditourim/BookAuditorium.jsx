@@ -14,18 +14,33 @@ function BookAuditorium() {
   }
 
   const [eventName, setEventName] = useState("");
-  const [startDate, setStartDate] = useState(new Date());
-  const [endDate, setEndDate] = useState(null);
-  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState({});
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [timeSlots, setTimeSlots] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState({}); // ✅ Store booked slots
 
   useEffect(() => {
     if (auditorium.start_time && auditorium.end_time) {
       generateTimeSlots(auditorium.start_time, auditorium.end_time);
     }
-  }, [auditorium, startDate]);
+  }, [auditorium]);
+
+  // ✅ Fetch booked slots when component loads
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      try {
+        const response = await fetch(`http://localhost:5001/booked-slots/${id}`);
+        const data = await response.json();
+        setBookedSlots(data || {});
+      } catch (error) {
+        console.error("❌ Error fetching booked slots:", error);
+      }
+    };
+
+    fetchBookedSlots();
+  }, [id]);
 
   const generateTimeSlots = (start, end) => {
     const startHour = parseInt(start.substring(0, 2), 10);
@@ -63,71 +78,92 @@ function BookAuditorium() {
     setTimeSlots(slots);
   };
 
-  const handleSlotChange = (slot) => {
-    let updatedSlots = [...selectedSlots];
-    if (updatedSlots.includes(slot)) {
-      updatedSlots = updatedSlots.filter((s) => s !== slot);
+  const handleDateChange = (date) => {
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
+
+    if (selectedDates.includes(localDate)) {
+      setSelectedDates(selectedDates.filter((d) => d !== localDate));
+      let updatedSlots = { ...selectedSlots };
+      delete updatedSlots[localDate];
+      setSelectedSlots(updatedSlots);
     } else {
-      updatedSlots.push(slot);
+      setSelectedDates([...selectedDates, localDate]);
+      setSelectedSlots({ ...selectedSlots, [localDate]: [] });
     }
-    updatedSlots.sort((a, b) => timeSlots.indexOf(a) - timeSlots.indexOf(b));
+  };
+
+  const handleSlotChange = (date, slot) => {
+    let updatedSlots = { ...selectedSlots };
+    if (updatedSlots[date]?.includes(slot)) {
+      updatedSlots[date] = updatedSlots[date].filter((s) => s !== slot);
+    } else {
+      updatedSlots[date] = [...(updatedSlots[date] || []), slot];
+    }
+    updatedSlots[date].sort((a, b) => timeSlots.indexOf(a) - timeSlots.indexOf(b));
     setSelectedSlots(updatedSlots);
   };
 
+  const handleAmenityChange = (amenity) => {
+    setSelectedAmenities((prev) =>
+      prev.includes(amenity.name) ? prev.filter((a) => a !== amenity.name) : [...prev, amenity.name]
+    );
+  };
+
   useEffect(() => {
-    if (!selectedSlots.length || !startDate || !endDate) {
+    if (!selectedDates.length) {
       setTotalPrice(0);
       return;
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const numDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    let totalHours = 0;
+    selectedDates.forEach((date) => {
+      totalHours += selectedSlots[date]?.length || 0;
+    });
 
-    const totalHours = selectedSlots.length * numDays;
     let amenitiesCost = auditorium.amenities
       .filter((a) => selectedAmenities.includes(a.name))
       .reduce((total, a) => total + a.cost, 0);
 
     setTotalPrice(totalHours * auditorium.price_per_hour + amenitiesCost);
-  }, [selectedSlots, selectedAmenities, startDate, endDate, auditorium]);
+  }, [selectedSlots, selectedAmenities, selectedDates, auditorium]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
-    const userId = localStorage.getItem("user_id"); // ✅ Fetch user_id from local storage
-  
+
+    const userId = localStorage.getItem("user_id");
     if (!userId) {
       alert("User not logged in. Please log in first!");
       return;
     }
-  
-    if (!eventName || !startDate || !endDate || selectedSlots.length === 0) {
+
+    if (!eventName || selectedDates.length === 0) {
       alert("Please fill all fields!");
       return;
     }
-  
+
     const bookingData = {
-      user_id: parseInt(userId), // Ensure it's an integer
+      user_id: parseInt(userId),
       auditorium_id: id,
       event_name: eventName,
-      start_date: startDate.toISOString().split("T")[0], 
-      end_date: new Date(endDate.getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0], // Fix End Date Issue
-      start_time: selectedSlots[0].split(" - ")[0], 
-      end_time: selectedSlots[selectedSlots.length - 1].split(" - ")[1], 
+      dates: selectedDates.map((date) => ({
+        date,
+        time_slots: selectedSlots[date] || [],
+      })),
       amenities: selectedAmenities,
       total_price: totalPrice,
     };
-  
+
     console.log("🔵 Booking Data Sent:", bookingData);
-  
+
     try {
       const response = await fetch("http://localhost:5001/book-auditorium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookingData),
       });
-  
+
       const data = await response.json();
       if (response.ok) {
         alert("✅ Booking successful!");
@@ -139,52 +175,43 @@ function BookAuditorium() {
       alert("Failed to book auditorium.");
     }
   };
-  
-  
 
   return (
     <div className="p-6 bg-white shadow-md rounded-md">
       <h2 className="text-2xl font-bold text-center">Book {auditorium.name}</h2>
       <p className="text-gray-600">⏰ <strong>Time:</strong> {auditorium.start_time} - {auditorium.end_time}</p>
       <p className="text-gray-600">💰 <strong>Price Per Hour:</strong> ₹{auditorium.price_per_hour}</p>
-      
-      <label className="block text-gray-600">Event Name:</label>
-      <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full p-2 border rounded-md" placeholder="Enter Event Name" />
-      
-      <div className="flex gap-4">
-        <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} minDate={new Date()} inline />
-        <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} minDate={startDate} inline />
-      </div>
 
-      <label className="block text-gray-600">Select Time Slots:</label>
-      <div className="grid grid-cols-3 gap-2">
-        {timeSlots.map((slot, index) => (
-          <button
-            key={index}
-            className={`p-2 border rounded-md ${selectedSlots.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"}`}
-            onClick={() => handleSlotChange(slot)}
-          >
-            {slot}
-          </button>
-        ))}
-      </div>
+      <label className="block text-gray-600">Select Dates:</label>
+      <DatePicker
+        selected={null}
+        onChange={handleDateChange}
+        minDate={new Date()}
+        inline
+        highlightDates={selectedDates.map((date) => new Date(date))}
+      />
 
-      <label className="block text-gray-600">Select Amenities:</label>
-      <div className="flex flex-wrap gap-2">
-        {auditorium.amenities.map((amenity, index) => (
-          <label key={index} className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={selectedAmenities.includes(amenity.name)}
-              onChange={() => setSelectedAmenities((prev) => prev.includes(amenity.name) ? prev.filter(a => a !== amenity.name) : [...prev, amenity.name])}
-              className="h-5 w-5"
-            />
-            <span>{amenity.name} (+₹{amenity.cost})</span>
-          </label>
-        ))}
-      </div>
+      {selectedDates.map((date) => (
+        <div key={date} className="mt-4">
+          <h3 className="text-lg font-semibold">{date}</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {timeSlots.map((slot, index) => (
+              <button
+                key={index}
+                className={`p-2 border rounded-md ${
+                  bookedSlots[date]?.includes(slot) ? "bg-gray-400 cursor-not-allowed" : 
+                  selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"
+                }`}
+                onClick={() => handleSlotChange(date, slot)}
+                disabled={bookedSlots[date]?.includes(slot)}
+              >
+                {slot}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
 
-      <div className="text-lg font-bold">Total Price: ₹{totalPrice}</div>
       <button onClick={handleSubmit} className="w-full bg-blue-600 text-white p-3 rounded-md text-lg">Confirm Booking</button>
     </div>
   );
