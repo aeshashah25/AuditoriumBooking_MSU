@@ -50,7 +50,7 @@ const UpdateProfile = () => {
         if (imagePreview) formData.append("profilePic", imagePreview);
 
         await axios.put("http://localhost:5000/api/user/update", formData, {
-          headers: { 
+          headers: {
             "Authorization": `Bearer ${token}`,
           },
         });
@@ -120,15 +120,15 @@ const UpdateProfile = () => {
               value={formik.values.name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className={`w-full p-2 border rounded ${
-                formik.touched.name && formik.errors.name ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-2 border rounded ${formik.touched.name && formik.errors.name ? "border-red-500" : "border-gray-300"
+                }`}
             />
             {formik.touched.name && formik.errors.name && (
               <p className="text-red-500 text-sm">{formik.errors.name}</p>
             )}
           </div>
 
+          {/* Email Field */}
           {/* Email Field */}
           <div className="mb-4">
             <label className="block text-gray-700">Email</label>
@@ -138,14 +138,15 @@ const UpdateProfile = () => {
               value={formik.values.email}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className={`w-full p-2 border rounded ${
-                formik.touched.email && formik.errors.email ? "border-red-500" : "border-gray-300"
-              }`}
+              disabled // This disables the field
+              className={`w-full p-2 border rounded bg-gray-100 cursor-not-allowed ${formik.touched.email && formik.errors.email ? "border-red-500" : "border-gray-300"
+                }`}
             />
             {formik.touched.email && formik.errors.email && (
               <p className="text-red-500 text-sm">{formik.errors.email}</p>
             )}
           </div>
+
 
           {/* Phone Field */}
           <div className="mb-4">
@@ -156,9 +157,8 @@ const UpdateProfile = () => {
               value={formik.values.phone}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              className={`w-full p-2 border rounded ${
-                formik.touched.phone && formik.errors.phone ? "border-red-500" : "border-gray-300"
-              }`}
+              className={`w-full p-2 border rounded ${formik.touched.phone && formik.errors.phone ? "border-red-500" : "border-gray-300"
+                }`}
             />
             {formik.touched.phone && formik.errors.phone && (
               <p className="text-red-500 text-sm">{formik.errors.phone}</p>
@@ -168,7 +168,7 @@ const UpdateProfile = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700"
+            className="w-full bg-brown text-white p-2 rounded-lg hover:bg-brown-light"
           >
             Update Profile
           </button>

@@ -81,6 +81,9 @@ const MainPage = () => {
     fetchUser();
   }, [navigate, tokenExpiration]);
 
+  const handleUpdate = () => {
+    navigate("/UpdateProfile", { state: { user, profilePicUrl } });
+  };
 
   const handleFeedbackSubmit = async () => {
     const storedUserId = localStorage.getItem("userId");
@@ -90,6 +93,7 @@ const MainPage = () => {
       return;
     }
 
+  
     const feedbackData = {
       auditoriumId: parseInt(selectedAuditorium),
       userId: parseInt(storedUserId),
@@ -168,7 +172,7 @@ const MainPage = () => {
                 />
                 <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-48 opacity-0 group-hover:opacity-100 transition-opacity z-50">
                   <ul className="py-2">
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => navigate("/UpdateProfile")}>
+                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleUpdate}>
                       Update Profile
                     </li>
                     <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => setShowFeedbackPopup(true)}>

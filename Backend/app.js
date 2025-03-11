@@ -273,6 +273,8 @@ app.put("/api/user/update", verifyToken, upload.single("profilePic"), async (req
     res.status(500).json({ message: "Error updating profile", error: error.message });
   }
 });
+
+
 app.get('/api/user/profile-pic/:userId', verifyToken, async (req, res) => {
   const { userId } = req.params;
 
@@ -295,10 +297,6 @@ app.get('/api/user/profile-pic/:userId', verifyToken, async (req, res) => {
     res.status(500).json({ message: 'Error fetching profile picture', error: error.message });
   }
 });
-
-
-
-
 
 
 // Step 1: Send Reset OTP
