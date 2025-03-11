@@ -27,7 +27,6 @@ function BookAuditorium() {
     }
   }, [auditorium]);
 
-  // ✅ Fetch booked slots when component loads
   useEffect(() => {
     const fetchBookedSlots = async () => {
       try {
@@ -182,6 +181,9 @@ function BookAuditorium() {
       <p className="text-gray-600">⏰ <strong>Time:</strong> {auditorium.start_time} - {auditorium.end_time}</p>
       <p className="text-gray-600">💰 <strong>Price Per Hour:</strong> ₹{auditorium.price_per_hour}</p>
 
+      <label className="block text-gray-600">Event Name:</label>
+      <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full p-2 border rounded-md" placeholder="Enter Event Name" />
+
       <label className="block text-gray-600">Select Dates:</label>
       <DatePicker
         selected={null}
@@ -209,6 +211,14 @@ function BookAuditorium() {
               </button>
             ))}
           </div>
+        </div>
+      ))}
+
+      <label className="block text-gray-600">Select Amenities:</label>
+      {auditorium.amenities.map((amenity, index) => (
+        <div key={index}>
+          <input type="checkbox" checked={selectedAmenities.includes(amenity.name)} onChange={() => handleAmenityChange(amenity)} />
+          {amenity.name} (+₹{amenity.cost})
         </div>
       ))}
 
