@@ -9,7 +9,7 @@ const MainPage = () => {
   const [profilePicUrl, setProfilePicUrl] = useState(null);
   const [tokenExpiration, setTokenExpiration] = useState(null);
   const [auditoriums, setAuditoriums] = useState([]);
-  
+
   // Feedback states
   const [selectedAuditorium, setSelectedAuditorium] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -31,24 +31,24 @@ const MainPage = () => {
   useEffect(() => {
     const fetchUser = async () => {
       const token = localStorage.getItem("jwt_token");
-  
+
       if (!token || isTokenExpired(token)) {
         localStorage.removeItem("jwt_token");
         navigate("/");
         return;
       }
-  
+
       try {
         const response = await axios.get("http://localhost:5000/api/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
+
         if (response.data.user) {
           setUser(response.data.user);
           localStorage.setItem("userId", response.data.user.id);
           const { exp } = JSON.parse(atob(token.split(".")[1]));
           setTokenExpiration(exp);
-  
+
           // Fetch Profile Picture
           try {
             const profilePicResponse = await axios.get(
@@ -58,7 +58,7 @@ const MainPage = () => {
                 responseType: "blob", // 👈 Ensure it's a blob
               }
             );
-  
+
             if (profilePicResponse.status === 200) {
               const imageUrl = URL.createObjectURL(profilePicResponse.data);
               setProfilePicUrl(imageUrl);
@@ -77,31 +77,31 @@ const MainPage = () => {
         navigate("/");
       }
     };
-  
+
     fetchUser();
   }, [navigate, tokenExpiration]);
-  
+
 
   const handleFeedbackSubmit = async () => {
     const storedUserId = localStorage.getItem("userId");
-  
+
     if (!selectedAuditorium || !feedback.trim()) {
       alert("Please select an auditorium and enter feedback.");
       return;
     }
-  
+
     const feedbackData = {
       auditoriumId: parseInt(selectedAuditorium),
       userId: parseInt(storedUserId),
       feedback: feedback.trim(),
     };
-  
+
     try {
       const token = localStorage.getItem("jwt_token");
       const response = await axios.post("http://localhost:5000/api/feedback", feedbackData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       if (response.status === 201) {
         alert("Feedback submitted successfully!");
         setShowFeedbackPopup(false);
@@ -113,27 +113,27 @@ const MainPage = () => {
       alert("Error submitting feedback. Please try again later.");
     }
   };
-  
+
   // Ensure auditoriums load correctly
   useEffect(() => {
     const fetchAuditoriums = async () => {
       try {
         const response = await axios.get("http://localhost:5002/api/auditoriums");
-  
+
         if (response.status === 200) {
-         // console.log("Fetched auditoriums:", response.data); // Debugging log
+          // console.log("Fetched auditoriums:", response.data); // Debugging log
           setAuditoriums(response.data);
         }
       } catch (error) {
         console.error("Error fetching auditoriums:", error);
       }
     };
-  
+
     fetchAuditoriums();
   }, []);
-  
- 
-  
+
+
+
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
@@ -149,23 +149,24 @@ const MainPage = () => {
           {/* Responsive Navbar */}
           <div className="w-full flex justify-between items-center bg-white p-4 shadow-lg rounded-lg">
             <span className="text-xl font-semibold text-gray-800">Welcome, {user.name}!</span>
-            
+
             <div className="flex items-center gap-4">
               <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+                className="px-4 py-2 bg-white text-brown-light  rounded-md hover:bg-brown hover:text-white transition"
                 onClick={() => navigate("/your-booking-page")}
               >
                 View Booking
               </button>
+
 
               {/* Profile Dropdown */}
               <div className="relative group">
                 <img
                   src={profilePicUrl || "/path/to/defaultProfilePic.jpg"}
                   alt="Profile"
-                  className="w-10 h-10 rounded-full border-2 border-gray-300 cursor-pointer group-hover:shadow-lg"
+                  className="w-14 h-14 rounded-full border-2 border-gray-300 cursor-pointer group-hover:shadow-lg"
                 />
-                <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-48 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-48 opacity-0 group-hover:opacity-100 transition-opacity z-50">
                   <ul className="py-2">
                     <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => navigate("/UpdateProfile")}>
                       Update Profile
