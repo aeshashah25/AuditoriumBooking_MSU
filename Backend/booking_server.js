@@ -127,10 +127,6 @@ app.post('/book-auditorium', async (req, res) => {
 });
 
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 701833ca7d1d285a736dc5b046feed63468c3f59
 // ✅ GET all auditoriums
 app.get('/get-booking/:id', async (req, res) => {
   try {
