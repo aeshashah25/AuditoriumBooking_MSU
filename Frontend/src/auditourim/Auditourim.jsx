@@ -36,7 +36,7 @@ function Auditourim() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-6 text-[#8B4513] text-center">Auditorium Details</h1>
+      <h1 className="text-2xl font-bold mb-6 text-black-800 text-center">Auditorium Details</h1>
 
       {loading ? (
         <p className="text-[#8B4513] text-center">Loading auditorium data...</p>
@@ -61,7 +61,7 @@ function Auditourim() {
                   
                   {/* Front Side */}
                   <div className="absolute w-full h-full bg-white border p-6 rounded-xl shadow-xl flex flex-col justify-between [backface-visibility:hidden]">
-                    <h2 className="text-xl font-semibold text-[#8B4513] text-center">
+                    <h2 className="text-xl font-semibold text-black text-center">
                       {auditorium.name}
                     </h2>
 
@@ -75,13 +75,13 @@ function Auditourim() {
                       />
                     </div>
 
-                    <p className="mt-4 text-[#8B4513]">
+                    <p className="mt-4">
                       <strong>Location:</strong> {auditorium.location}
                     </p>
-                    <p className="text-[#8B4513]">
+                    <p className="">
                       <strong>Capacity:</strong> {auditorium.capacity} people
                     </p>
-                    <p className="text-[#8B4513]">
+                    <p className="">
                       <strong>Amenities:</strong> {amenitiesList}
                     </p>
 
@@ -96,10 +96,10 @@ function Auditourim() {
                   </div>
 
                   {/* Back Side */}
-                  <div className="absolute w-full h-full bg-[#8B4513] text-white flex flex-col items-center justify-center rounded-xl [backface-visibility:hidden] [transform:rotateY(180deg)] shadow-xl">
+                  <div className="absolute w-full h-full bg-[#87553B] text-white flex flex-col items-center justify-center rounded-xl [backface-visibility:hidden] [transform:rotateY(180deg)] shadow-xl">
                     <h2 className="text-xl font-semibold mb-4 text-center">Book Now</h2>
                     <button
-                      className="px-6 py-3 bg-white text-[#8B4513] font-semibold rounded-full shadow-lg 
+                      className="px-6 py-3 bg-white text-[#87553B] font-semibold rounded-full shadow-lg 
                                  hover:bg-gray-200 hover:shadow-xl transition duration-300 transform hover:scale-105"
                       onClick={() => navigate(`/auditorium/${auditorium.id}`)}
                     >
@@ -116,7 +116,7 @@ function Auditourim() {
       <div className="text-center mt-6">
         <button
           onClick={handleViewMore}
-          className="bg-[#8B4513] text-white px-6 py-2 rounded-lg hover:bg-[#A0522D] transition duration-300"
+          className="bg-brown-light text-white px-6 py-2 rounded-lg hover:bg-brown transition duration-300"
         >
           {showAll ? "View Less" : "View More"}
         </button>
