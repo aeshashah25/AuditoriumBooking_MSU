@@ -41,16 +41,20 @@ function AuditoriumDetail() {
     <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-gray-100 relative">
       {/* Auditorium Details */}
       <div className="w-full max-w-screen-lg md:max-w-2xl lg:max-w-3xl bg-white shadow-lg rounded-lg p-6 relative transition-all">
-        {/* Back Button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 bg-brown hover:bg-brown-light text-white p-2 rounded-md"
-        >
-          Back
-        </button>
+        <div className="flex items-center justify-between w-full px-4 mt-4">
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-brown hover:bg-brown-light text-white p-2 rounded-md"
+          >
+            Back
+          </button>
 
-        {/* Title */}
-        <h1 className="text-3xl font-bold text-center mt-10">{auditorium.name}</h1>
+          {/* Title */}
+          <h1 className="text-3xl font-bold text-center flex-1 text-center">
+            {auditorium.name}
+          </h1>
+        </div>
 
         {/* Image Slider */}
         <div className="mt-6">
