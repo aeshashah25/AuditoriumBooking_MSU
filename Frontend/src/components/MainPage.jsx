@@ -218,7 +218,7 @@ const MainPage = () => {
                 />
 
                 <div className="flex justify-between">
-                  <button className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600" onClick={handleFeedbackSubmit}>
+                  <button className="bg-brown text-white px-4 py-2 rounded-lg hover:bg-brown-light" onClick={handleFeedbackSubmit}>
                     Submit
                   </button>
                   <button className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg" onClick={() => setShowFeedbackPopup(false)}>
