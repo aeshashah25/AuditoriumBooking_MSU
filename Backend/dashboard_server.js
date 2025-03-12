@@ -177,9 +177,6 @@ app.get("/api/auditoriums", async (req, res) => {
   }
 });
 
-
-  
-
 // API to Mark Auditorium as Under Maintenance or soft Delete
 app.post("/api/auditoriums/:id/toggle-maintenance", async (req, res) => {
   const { id } = req.params;
@@ -229,7 +226,6 @@ app.post("/api/auditoriums/:id/toggle-maintenance", async (req, res) => {
     res.status(500).json({ error: "Internal server error." });
   }
 });
-
 
 // Update auditorium details
 app.put("/api/auditoriums/:id", upload.array("images", 5), async (req, res) => {
@@ -317,9 +313,6 @@ app.put("/api/auditoriums/:id", upload.array("images", 5), async (req, res) => {
   }
 });
 
-
-
-
 app.get("/api/dashboard-counters", async (req, res) => {
   try {
     const result = await sql.query(`
@@ -342,7 +335,7 @@ app.get("/api/users", async (req, res) => {
   try {
     const result = await sql.query(`
       SELECT 
-        id, name, email, phone,
+        id, name, email, phone,status,
         CASE 
           WHEN profilePic IS NOT NULL THEN CONCAT('http://localhost:5000/api/user/avatar/', id)
           ELSE NULL 
@@ -354,6 +347,20 @@ app.get("/api/users", async (req, res) => {
   } catch (error) {
     console.error("Error fetching users:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+//set User Active and DeActive
+app.put("/api/users/:id/status", async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+      await sql.query`EXEC UpdateUserStatus ${id}, ${status}`;
+      res.status(200).json({ message: "User status updated successfully" });
+  } catch (error) {
+      console.error("Error updating user status:", error);
+      res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

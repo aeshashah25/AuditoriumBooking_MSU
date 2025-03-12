@@ -127,8 +127,6 @@ app.post('/book-auditorium', async (req, res) => {
 });
 
 
-
-
 // ✅ GET all auditoriums
 app.get('/get-auditoriums', async (req, res) => {
   try {
@@ -149,22 +147,21 @@ app.get('/admin/view-pending-booking-requests', async (req, res) => {
     const result = await pool.request().execute('GetPendingBookings');
 
     // Format the result data
-    const formattedRequests = result.recordset.map(request => {
-      //console.log('Raw Start Time:', request.StartTime);  // Log raw time data
-      //console.log('Raw End Time:', request.EndTime);  // Log raw time data
-
-      return {
-        booking_id: request.BookingId,
-        user_id: request.UserId,
-        username: request.Username || 'N/A',
-        auditorium_id: request.AuditoriumId,
-        auditorium_name: request.AuditoriumName || 'N/A',
-        date: new Date(request.BookingDate).toLocaleDateString(),
-        start_time: formatTimeFromSQL(request.StartTime),  // Format the start time
-        end_time: formatTimeFromSQL(request.EndTime),  // Format the end time
-        event_name: request.EventName || 'No event specified',
-      };
-    });
+    const formattedRequests = result.recordset.map(request => ({
+      booking_id: request.BookingId,
+      user_id: request.UserId,
+      username: request.Username || 'N/A',
+      auditorium_id: request.AuditoriumId,
+      auditorium_name: request.AuditoriumName || 'N/A',
+      date: request.BookingDate 
+        ? new Date(request.BookingDate).toISOString().split('T')[0]  // Convert JSON string date to YYYY-MM-DD
+        : 'N/A',
+      time_slots: request.TimeSlots ? JSON.parse(request.TimeSlots) : [],  // Convert time_slots JSON string to array
+      event_name: request.EventName || 'No event specified',
+      booking_status: request.booking_status || 'Pending',
+      total_amount: request.total_amount ? parseFloat(request.total_amount).toFixed(2) : '0.00',
+      amenities: request.amenities || 'None',
+    }));
 
     res.status(200).json(formattedRequests);
 
@@ -173,8 +170,6 @@ app.get('/admin/view-pending-booking-requests', async (req, res) => {
     res.status(500).json({ message: 'Error fetching booking requests' });
   }
 });
-
-
 
 //admin View Payment Status
 app.get('/admin/view-payment-status', async (req, res) => {
