@@ -19,7 +19,10 @@ function BookAuditorium() {
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [totalPrice, setTotalPrice] = useState(0);
   const [timeSlots, setTimeSlots] = useState([]);
-  const [bookedSlots, setBookedSlots] = useState({}); // ✅ Store booked slots
+  const [bookedSlots, setBookedSlots] = useState({});
+  const [isDateRangeMode, setIsDateRangeMode] = useState(false);
+  const [dateRange, setDateRange] = useState([null, null]);
+  const [startDate, endDate] = dateRange;
 
   useEffect(() => {
     if (auditorium.start_time && auditorium.end_time) {
@@ -43,41 +46,40 @@ function BookAuditorium() {
 
   const generateTimeSlots = (start, end) => {
     const startHour = parseInt(start.substring(0, 2), 10);
-    const startMinute = parseInt(start.substring(3, 5), 10);
     const endHour = parseInt(end.substring(0, 2), 10);
-    const endMinute = parseInt(end.substring(3, 5), 10);
-
+    
     let slots = [];
-    let hour = startHour;
-    let minute = startMinute;
-
-    while (hour < endHour || (hour === endHour && minute < endMinute)) {
-      let nextHour = hour;
-      let nextMinute = minute + 60;
-      if (nextMinute >= 60) {
-        nextHour += 1;
-        nextMinute -= 60;
-      }
-
-      if (nextHour > endHour || (nextHour === endHour && nextMinute > endMinute)) {
-        break;
-      }
-
-      const formattedTime = `${hour.toString().padStart(2, "0")}:${minute
-        .toString()
-        .padStart(2, "0")} - ${nextHour.toString().padStart(2, "0")}:${nextMinute
-        .toString()
-        .padStart(2, "0")}`;
-      slots.push(formattedTime);
-
-      hour = nextHour;
-      minute = nextMinute;
+    for (let hour = startHour; hour < endHour; hour++) {
+      slots.push(`${hour.toString().padStart(2, "0")}:00 - ${(hour + 1).toString().padStart(2, "0")}:00`);
     }
-
     setTimeSlots(slots);
   };
 
-  const handleDateChange = (date) => {
+  const handleDateChange = (update) => {
+    if (!update[0] || !update[1]) {
+      setDateRange(update);
+      return;
+    }
+  
+    // Convert selected dates to UTC to avoid timezone issues
+    const start = new Date(Date.UTC(update[0].getFullYear(), update[0].getMonth(), update[0].getDate()));
+    const end = new Date(Date.UTC(update[1].getFullYear(), update[1].getMonth(), update[1].getDate()));
+  
+    let range = [];
+    let tempDate = new Date(start);
+  
+    while (tempDate <= end) {
+      range.push(tempDate.toISOString().split("T")[0]); // Ensure correct date format
+      tempDate.setUTCDate(tempDate.getUTCDate() + 1); // Use setUTCDate to avoid timezone shift
+    }
+  
+    setDateRange([start, end]); 
+    setSelectedDates(range);
+  };
+  
+  
+
+  const handleSingleDateChange = (date) => {
     const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
       .toISOString()
       .split("T")[0];
@@ -92,18 +94,39 @@ function BookAuditorium() {
       setSelectedSlots({ ...selectedSlots, [localDate]: [] });
     }
   };
-
   const handleSlotChange = (date, slot) => {
     let updatedSlots = { ...selectedSlots };
-    if (updatedSlots[date]?.includes(slot)) {
-      updatedSlots[date] = updatedSlots[date].filter((s) => s !== slot);
+  
+    if (isDateRangeMode) {
+      // If range mode is active, apply the slot change to all dates in the range
+      let newSlots = selectedDates.reduce((acc, d) => {
+        let slotsForDate = updatedSlots[d] ? [...updatedSlots[d]] : [];
+        
+        if (slotsForDate.includes(slot)) {
+          // Remove the slot if it was already selected
+          acc[d] = slotsForDate.filter((s) => s !== slot);
+        } else {
+          // Add the slot if it wasn't selected
+          acc[d] = [...slotsForDate, slot];
+        }
+        
+        return acc;
+      }, {});
+  
+      setSelectedSlots(newSlots);
     } else {
-      updatedSlots[date] = [...(updatedSlots[date] || []), slot];
+      // Single-date mode: toggle the slot for just this date
+      if (updatedSlots[date]?.includes(slot)) {
+        updatedSlots[date] = updatedSlots[date].filter((s) => s !== slot);
+      } else {
+        updatedSlots[date] = [...(updatedSlots[date] || []), slot];
+      }
+  
+      setSelectedSlots(updatedSlots);
     }
-    updatedSlots[date].sort((a, b) => timeSlots.indexOf(a) - timeSlots.indexOf(b));
-    setSelectedSlots(updatedSlots);
   };
-
+  
+  
   const handleAmenityChange = (amenity) => {
     setSelectedAmenities((prev) =>
       prev.includes(amenity.name) ? prev.filter((a) => a !== amenity.name) : [...prev, amenity.name]
@@ -130,97 +153,140 @@ function BookAuditorium() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     const userId = localStorage.getItem("user_id");
     if (!userId) {
       alert("User not logged in. Please log in first!");
       return;
     }
-
+  
     if (!eventName || selectedDates.length === 0) {
       alert("Please fill all fields!");
       return;
     }
-
+  
+    let formattedDates = [];
+  
+    if (isDateRangeMode) {
+      // Store the date range with the selected time slots
+      formattedDates.push({
+        date_range: `${selectedDates[0]} - ${selectedDates[selectedDates.length - 1]}`,
+        time_slots: selectedSlots[selectedDates[0]] || [],
+      });
+    } else {
+      // Store each date separately with its time slots
+      formattedDates = selectedDates.map((date) => ({
+        date,
+        time_slots: selectedSlots[date] || [],
+      }));
+    }
+  
     const bookingData = {
       user_id: parseInt(userId),
       auditorium_id: id,
       event_name: eventName,
-      dates: selectedDates.map((date) => ({
-        date,
-        time_slots: selectedSlots[date] || [],
-      })),
+      dates: formattedDates,
       amenities: selectedAmenities,
       total_price: totalPrice,
     };
-
-    console.log("🔵 Booking Data Sent:", bookingData);
-
+  
     try {
       const response = await fetch("http://localhost:5001/book-auditorium", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(bookingData),
       });
-
-      const data = await response.json();
+  
       if (response.ok) {
-        alert("✅ Booking successful!");
+        alert("✅ Booking Successful!");
+        setEventName("");
+        setSelectedDates([]);
+        setSelectedSlots({});
+        setSelectedAmenities([]);
+        setTotalPrice(0);
       } else {
-        alert("❌ Error: " + data.message);
+        const errorData = await response.json();
+        alert(`❌ Booking Failed: ${errorData.message}`);
       }
     } catch (error) {
-      console.error("❌ Error booking auditorium:", error);
-      alert("Failed to book auditorium.");
+      console.error("❌ Error submitting booking:", error);
+      alert("❌ Error submitting booking. Please try again.");
     }
   };
-
+  
+  
   return (
     <div className="p-6 bg-white shadow-md rounded-md">
       <h2 className="text-2xl font-bold text-center">Book {auditorium.name}</h2>
-      <p className="text-gray-600">⏰ <strong>Time:</strong> {auditorium.start_time} - {auditorium.end_time}</p>
-      <p className="text-gray-600">💰 <strong>Price Per Hour:</strong> ₹{auditorium.price_per_hour}</p>
 
       <label className="block text-gray-600">Event Name:</label>
       <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full p-2 border rounded-md" placeholder="Enter Event Name" />
 
-      <label className="block text-gray-600">Select Dates:</label>
-      <DatePicker
-        selected={null}
-        onChange={handleDateChange}
-        minDate={new Date()}
-        inline
-        highlightDates={selectedDates.map((date) => new Date(date))}
-      />
+      <label className="block text-gray-600">Select Booking Type:</label>
+      <select onChange={(e) => setIsDateRangeMode(e.target.value === "range")} className="w-full p-2 border rounded-md">
+        <option value="multiple">Multiple time slots per date</option>
+        <option value="range">Same time slots for date range</option>
+      </select>
 
-      {selectedDates.map((date) => (
-        <div key={date} className="mt-4">
-          <h3 className="text-lg font-semibold">{date}</h3>
+      <label className="block text-gray-600">Select Dates:</label>
+      {isDateRangeMode ? (
+        <DatePicker selectsRange startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} inline />
+      ) : (
+        <DatePicker selected={null} onChange={handleSingleDateChange} minDate={new Date()} inline />
+      )}
+
+{selectedDates.length > 0 && (
+  <div>
+    <h3 className="text-lg font-semibold">
+      {isDateRangeMode ? `Selected Date Range: ${selectedDates[0]} to ${selectedDates[selectedDates.length - 1]}` : "Selected Dates:"}
+    </h3>
+
+    {!isDateRangeMode ? (
+      selectedDates.map((date, index) => (
+        <div key={index}>
+          <h4 className="text-md font-semibold mt-2">{date}</h4>
           <div className="grid grid-cols-3 gap-2">
-            {timeSlots.map((slot, index) => (
+            {timeSlots.map((slot, slotIndex) => (
               <button
-                key={index}
-                className={`p-2 border rounded-md ${
-                  bookedSlots[date]?.includes(slot) ? "bg-gray-400 cursor-not-allowed" : 
-                  selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"
-                }`}
+                key={slotIndex}
+                className={`p-2 border rounded-md ${selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"}`}
                 onClick={() => handleSlotChange(date, slot)}
-                disabled={bookedSlots[date]?.includes(slot)}
               >
                 {slot}
               </button>
             ))}
           </div>
         </div>
-      ))}
+      ))
+    ) : (
+      <div>
+        <h4 className="text-md font-semibold mt-2">Time Slots:</h4>
+        <div className="grid grid-cols-3 gap-2">
+          {timeSlots.map((slot, slotIndex) => (
+            <button
+              key={slotIndex}
+              className={`p-2 border rounded-md ${selectedSlots[selectedDates[0]]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"}`}
+              onClick={() => handleSlotChange(selectedDates[0], slot)}
+            >
+              {slot}
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
-      <label className="block text-gray-600">Select Amenities:</label>
+          <h3 className="text-lg font-semibold mt-4">Select Amenities:</h3>
       {auditorium.amenities.map((amenity, index) => (
-        <div key={index}>
-          <input type="checkbox" checked={selectedAmenities.includes(amenity.name)} onChange={() => handleAmenityChange(amenity)} />
+        <div key={index} className="flex items-center">
+          <input type="checkbox" checked={selectedAmenities.includes(amenity.name)} onChange={() => handleAmenityChange(amenity)} className="mr-2" />
           {amenity.name} (+₹{amenity.cost})
         </div>
       ))}
+
       <h2 className="text-xl font-bold mt-6">Total Cost: ₹{totalPrice}</h2>
       <button onClick={handleSubmit} className="w-full bg-blue-600 text-white p-3 rounded-md text-lg">Confirm Booking</button>
     </div>
