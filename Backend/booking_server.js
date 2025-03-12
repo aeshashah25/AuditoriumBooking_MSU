@@ -127,15 +127,32 @@ app.post('/book-auditorium', async (req, res) => {
 });
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 701833ca7d1d285a736dc5b046feed63468c3f59
 // ✅ GET all auditoriums
-app.get('/get-auditoriums', async (req, res) => {
+app.get('/get-booking/:id', async (req, res) => {
   try {
+    const { id } = req.params;
     const pool = await poolPromise;
-    const result = await pool.request().query('SELECT * FROM auditoriums');
-    res.status(200).json(result.recordset);
+
+    const result = await pool.request()
+      .input('BookingId', sql.Int, id)
+      .query("SELECT * FROM bookings WHERE id = @BookingId");
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: "❌ Booking not found!" });
+    }
+
+    // Parse JSON data from database
+    const booking = result.recordset[0];
+    booking.dates = JSON.parse(booking.dates);
+
+    res.status(200).json(booking);
   } catch (err) {
-    console.error('Error fetching auditoriums:', err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("❌ Error fetching booking:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 });
 
