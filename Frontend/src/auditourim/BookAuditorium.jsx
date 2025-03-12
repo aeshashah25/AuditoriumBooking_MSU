@@ -221,6 +221,7 @@ function BookAuditorium() {
           {amenity.name} (+₹{amenity.cost})
         </div>
       ))}
+      <h2 className="text-xl font-bold mt-6">Total Cost: ₹{totalPrice}</h2>
 
       <button onClick={handleSubmit} className="w-full bg-blue-600 text-white p-3 rounded-md text-lg">Confirm Booking</button>
     </div>
