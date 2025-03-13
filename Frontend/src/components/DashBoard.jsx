@@ -46,7 +46,7 @@ const DashBoard = () => {
   return (
     <div className="flex min-h-screen w-full bg-gray-100">
       {/* Sidebar */}
-      <div className={`fixed lg:static top-0 left-0 h-screen lg:w-1/4 w-[250px] bg-gray-900 text-white transition-transform transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 z-50 shadow-lg`}>
+      <div className={`fixed lg:static top-0 left-0 h-auto lg:w-1/4 w-[250px] bg-gray-900 text-white transition-transform transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 z-50 shadow-lg`}>
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <h1 className="text-xl font-semibold">Admin Dashboard</h1>
           <button className="lg:hidden" onClick={() => setIsSidebarOpen(false)}>
