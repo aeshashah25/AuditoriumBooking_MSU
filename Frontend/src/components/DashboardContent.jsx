@@ -75,8 +75,8 @@ const DashboardContent = () => {
       {/* Main Content */}
       <div className="flex flex-col w-full max-w-5xl p-5 bg-white shadow-lg rounded-lg">
         {/* Dashboard Content */}
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4 text-center">Dashboard Overview</h2>
-        <p className="text-gray-700 text-center">Manage all auditorium bookings and requests from here.</p>
+        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Dashboard Overview</h2>
+        <p className="text-gray-700">Manage all auditorium bookings and requests from here.</p>
 
         {/* Responsive Cards for Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
