@@ -35,15 +35,15 @@ function BookAuditorium() {
       try {
         const response = await fetch(`http://localhost:5001/booked-slots/${id}`);
         const data = await response.json();
-        setBookedSlots(data || {});
+        setBookedSlots(data || {}); // Save booked slots
       } catch (error) {
         console.error("❌ Error fetching booked slots:", error);
       }
     };
-
+  
     fetchBookedSlots();
   }, [id]);
-
+  
   const generateTimeSlots = (start, end) => {
     const startHour = parseInt(start.substring(0, 2), 10);
     const endHour = parseInt(end.substring(0, 2), 10);
@@ -250,12 +250,16 @@ function BookAuditorium() {
           <div className="grid grid-cols-3 gap-2">
             {timeSlots.map((slot, slotIndex) => (
               <button
-                key={slotIndex}
-                className={`p-2 border rounded-md ${selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"}`}
-                onClick={() => handleSlotChange(date, slot)}
-              >
-                {slot}
-              </button>
+              key={slotIndex}
+              className={`p-2 border rounded-md 
+                ${selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"} 
+                ${bookedSlots[date]?.includes(slot) ? "bg-gray-300 cursor-not-allowed opacity-50" : ""}`}
+              onClick={() => !bookedSlots[date]?.includes(slot) && handleSlotChange(date, slot)}
+              disabled={bookedSlots[date]?.includes(slot)}
+            >
+              {slot}
+            </button>
+            
             ))}
           </div>
         </div>
@@ -264,15 +268,25 @@ function BookAuditorium() {
       <div>
         <h4 className="text-md font-semibold mt-2">Time Slots:</h4>
         <div className="grid grid-cols-3 gap-2">
-          {timeSlots.map((slot, slotIndex) => (
-            <button
-              key={slotIndex}
-              className={`p-2 border rounded-md ${selectedSlots[selectedDates[0]]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"}`}
-              onClick={() => handleSlotChange(selectedDates[0], slot)}
-            >
-              {slot}
-            </button>
-          ))}
+        {timeSlots.map((slot, slotIndex) => {
+  // Check if the slot is booked on ANY of the selected dates
+  const isBooked = selectedDates.some((date) => bookedSlots[date]?.includes(slot));
+
+  return (
+    <button
+      key={slotIndex}
+      className={`p-2 border rounded-md 
+        ${selectedSlots[selectedDates[0]]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"} 
+        ${isBooked ? "bg-gray-300 cursor-not-allowed opacity-50" : ""}`}
+      onClick={() => !isBooked && handleSlotChange(selectedDates[0], slot)}
+      disabled={isBooked}
+    >
+      {slot}
+    </button>
+  );
+})}
+
+
         </div>
       </div>
     )}

@@ -127,62 +127,64 @@ app.post('/book-auditorium', async (req, res) => {
 });
 
 
-// ✅ GET all auditoriums
-app.get('/get-booking/:id', async (req, res) => {
+// ✅ Get booked slots for an auditorium
+app.get('/booked-slots/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const pool = await poolPromise;
 
     const result = await pool.request()
-      .input('BookingId', sql.Int, id)
-      .query("SELECT * FROM bookings WHERE id = @BookingId");
+      .input('AuditoriumId', sql.Int, id)
+      .query(`
+        SELECT dates, booking_status 
+        FROM bookings 
+        WHERE auditorium_id = @AuditoriumId 
+          AND booking_status IN ('pending', 'approved') 
+      `);
 
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ message: "❌ Booking not found!" });
-    }
+    let bookedSlots = {};
 
-    // Parse JSON data from database
-    const booking = result.recordset[0];
-    booking.dates = JSON.parse(booking.dates);
+    result.recordset.forEach((booking) => {
+      const bookingDates = JSON.parse(booking.dates);
+      bookingDates.forEach(({ date, time_slots }) => {
+        if (!bookedSlots[date]) {
+          bookedSlots[date] = new Set();
+        }
+        time_slots.forEach(slot => bookedSlots[date].add(slot));
+      });
+    });
 
-    res.status(200).json(booking);
+    // Convert sets back to arrays for JSON response
+    Object.keys(bookedSlots).forEach(date => {
+      bookedSlots[date] = Array.from(bookedSlots[date]);
+    });
+
+    res.status(200).json(bookedSlots);
   } catch (err) {
-    console.error("❌ Error fetching booking:", err);
+    console.error("❌ Error fetching booked slots:", err);
     res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 });
 
-app.get('/admin/view-pending-booking-requests', async (req, res) => {
+// ✅ Get all bookings using the stored procedure
+app.get('/get-all-bookings', async (req, res) => {
   try {
     const pool = await poolPromise;
 
-    // Execute the stored procedure GetPendingBookings
-    const result = await pool.request().execute('GetPendingBookings');
+    const result = await pool.request().execute('GetAllBookings');
 
-    // Format the result data
-    const formattedRequests = result.recordset.map(request => ({
-      booking_id: request.BookingId,
-      user_id: request.UserId,
-      username: request.Username || 'N/A',
-      auditorium_id: request.AuditoriumId,
-      auditorium_name: request.AuditoriumName || 'N/A',
-      date: request.BookingDate 
-        ? new Date(request.BookingDate).toISOString().split('T')[0]  // Convert JSON string date to YYYY-MM-DD
-        : 'N/A',
-      time_slots: request.TimeSlots ? JSON.parse(request.TimeSlots) : [],  // Convert time_slots JSON string to array
-      event_name: request.EventName || 'No event specified',
-      booking_status: request.booking_status || 'Pending',
-      total_amount: request.total_amount ? parseFloat(request.total_amount).toFixed(2) : '0.00',
-      amenities: request.amenities || 'None',
+    const bookings = result.recordset.map(booking => ({
+      ...booking,
+      dates: JSON.parse(booking.dates) // Convert stored JSON dates back to array
     }));
 
-    res.status(200).json(formattedRequests);
-
-  } catch (error) {
-    console.error('Error fetching booking requests:', error);
-    res.status(500).json({ message: 'Error fetching booking requests' });
+    res.status(200).json(bookings);
+  } catch (err) {
+    console.error("❌ Error fetching bookings:", err);
+    res.status(500).json({ message: "Internal Server Error", error: err.message });
   }
 });
+
 
 //admin View Payment Status
 app.get('/admin/view-payment-status', async (req, res) => {
