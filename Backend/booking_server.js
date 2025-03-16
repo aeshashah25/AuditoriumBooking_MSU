@@ -185,6 +185,48 @@ app.get('/get-all-bookings', async (req, res) => {
   }
 });
 
+// API to Approve or Reject Booking
+app.post("/update-booking-status", async (req, res) => {
+  const { booking_id, action, approved_discount, reject_reason } = req.body;
+
+  if (!booking_id || !action) {
+    return res.status(400).json({ error: "Booking ID and action are required" });
+  }
+
+  try {
+    const pool = await poolPromise;
+    let request = pool.request();
+
+    request.input("BookingID", sql.Int, booking_id);
+    request.input("Action", sql.VarChar(10), action);
+
+    if (action === "approve") {
+      if (approved_discount === undefined) {
+        return res.status(400).json({ error: "Approved discount is required for approval" });
+      }
+      request.input("ApprovedDiscount", sql.Decimal(10, 2), approved_discount);
+    } else {
+      request.input("ApprovedDiscount", sql.Decimal(10, 2), null);
+    }
+
+    if (action === "reject") {
+      if (!reject_reason) {
+        return res.status(400).json({ error: "Reject reason is required for rejection" });
+      }
+      request.input("RejectReason", sql.Text, reject_reason);
+    } else {
+      request.input("RejectReason", sql.Text, null);
+    }
+
+    let result = await request.execute("UpdateBookingStatus");
+
+    res.json(result.recordset[0]); // Return the message from the stored procedure
+  } catch (error) {
+    console.error("❌ Database Error:", error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 //admin View Payment Status
 app.get('/admin/view-payment-status', async (req, res) => {

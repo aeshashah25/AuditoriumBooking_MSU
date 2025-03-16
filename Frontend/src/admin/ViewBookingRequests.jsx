@@ -1,29 +1,60 @@
 import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 function ViewBookingRequests() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [discount, setDiscount] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
+  const [actionType, setActionType] = useState(""); // "approve" or "reject"
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const response = await fetch("http://localhost:5001/get-all-bookings");
-        const data = await response.json();
-        setBookings(data);
-      } catch (error) {
-        console.error("❌ Error fetching bookings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBookings();
   }, []);
+
+  const fetchBookings = async () => {
+    try {
+      const response = await axios.get("http://localhost:5001/get-all-bookings");
+      setBookings(response.data);
+    } catch (error) {
+      console.error("❌ Error fetching bookings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAction = async () => {
+    if (actionType === "approve" && !discount) {
+      alert("Enter discount percentage!");
+      return;
+    }
+    if (actionType === "reject" && !rejectReason) {
+      alert("Enter rejection reason!");
+      return;
+    }
+
+    try {
+      await axios.post("http://localhost:5001/update-booking-status", {
+        booking_id: selectedBooking,
+        action: actionType,
+        approved_discount: actionType === "approve" ? parseFloat(discount) : null,
+        reject_reason: actionType === "reject" ? rejectReason : null,
+      });
+
+      alert(`Booking ${actionType}d successfully!`);
+      setSelectedBooking(null);
+      setDiscount("");
+      setRejectReason("");
+      fetchBookings(); // Refresh booking list
+    } catch (error) {
+      console.error(`❌ Error updating booking status:`, error);
+    }
+  };
 
   if (loading) {
     return <p className="text-center text-gray-600 mt-5">Loading bookings...</p>;
   }
-
   return (
     <div className="p-6 bg-white shadow-md rounded-md">
       <h2 className="text-2xl font-bold text-center mb-6">View Booking Requests</h2>
@@ -35,17 +66,20 @@ function ViewBookingRequests() {
         <div className="overflow-x-auto max-w-full">
           <div className="w-full min-w-[900px]">
             <table className="w-full border-collapse border border-gray-200">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border p-3">User</th>
-                  <th className="border p-3">Auditorium</th>
-                  <th className="border p-3">Event Name</th>
-                  <th className="border p-3">Dates & Time Slots</th>
-                  <th className="border p-3">Amenities</th>
-                  <th className="border p-3">Total Cost</th>
-                  <th className="border p-3">Status</th>
-                </tr>
-              </thead>
+            <thead>
+  <tr className="bg-gray-100">
+    <th className="border p-3">User</th>
+    <th className="border p-3">Auditorium</th>
+    <th className="border p-3">Event Name</th>
+    <th className="border p-3">Dates & Time Slots</th>
+    <th className="border p-3">Amenities</th>
+    <th className="border p-3">Total Cost</th>
+    <th className="border p-3">Discount (%)</th> {/* ✅ New Column */}
+    <th className="border p-3">Discount Amount</th> {/* ✅ New Column */}
+    <th className="border p-3">Actions</th>
+  </tr>
+</thead>
+
               <tbody>
                 {bookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-gray-50">
@@ -131,27 +165,37 @@ function ViewBookingRequests() {
                     </td>
   
                     <td className="border p-3 text-sm">₹{booking.total_amount}</td>
-                    <td className="border p-3 text-sm">
-                      {booking.booking_status ? (
-                        <span
-                          className={`px-2 py-1 rounded text-white ${
-                            booking.booking_status.toLowerCase() === "approved"
-                              ? "bg-green-500"
-                              : booking.booking_status.toLowerCase() === "pending"
-                              ? "bg-yellow-500"
-                              : booking.booking_status.toLowerCase() === "rejected"
-                              ? "bg-red-500"
-                              : booking.booking_status.toLowerCase() === "cancelled"
-                              ? "bg-gray-500"
-                              : "bg-blue-500"
-                          }`}
-                        >
-                          {booking.booking_status.charAt(0).toUpperCase() + booking.booking_status.slice(1)}
-                        </span>
-                      ) : (
-                        <span className="text-gray-500">No status</span>
-                      )}
-                    </td>
+
+
+{/* ✅ Show Discount Percentage */}
+<td className="border p-3 text-sm">{booking.approved_discount}%</td>
+
+{/* ✅ Show Discount Amount */}
+<td className="border p-3 text-sm">₹{booking.discount_amount}</td>
+
+{/* ✅ Show Status & Rejection Reason */}
+<td className="border p-3 text-sm">
+  <span
+    className={`px-2 py-1 rounded text-white ${
+      booking.booking_status === "approved"
+        ? "bg-green-500"
+        : booking.booking_status === "pending"
+        ? "bg-yellow-500"
+        : booking.booking_status === "rejected"
+        ? "bg-red-500"
+        : "bg-gray-500"
+    }`}
+  >
+    {booking.booking_status.charAt(0).toUpperCase() + booking.booking_status.slice(1)}
+  </span>
+
+  {/* ✅ Show Rejection Reason if Rejected */}
+  {booking.booking_status === "rejected" && booking.reject_reason && (
+    <p className="text-xs text-red-500 mt-1">🛑 {booking.reject_reason}</p>
+  )}
+</td>
+
+
                   </tr>
                 ))}
               </tbody>
