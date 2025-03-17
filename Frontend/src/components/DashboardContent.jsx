@@ -71,9 +71,9 @@ const DashboardContent = () => {
 
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-100 justify-center items-start pt-10">
+    <div className="flex min-h-screen w-full bg-gray-100 justify-center items-start pt-5">
       {/* Main Content */}
-      <div className="flex flex-col w-full max-w-5xl p-5 bg-white shadow-lg rounded-lg">
+      <div className="flex flex-col w-full max-w-5xl p-5 bg-white shadow-lg">
         {/* Dashboard Content */}
         <h2 className="text-2xl font-semibold text-gray-800 mb-4">Dashboard Overview</h2>
         <p className="text-gray-700">Manage all auditorium bookings and requests from here.</p>

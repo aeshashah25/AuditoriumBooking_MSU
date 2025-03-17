@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEdit, FaTrashAlt, FaUndo } from "react-icons/fa";
-import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import { ArrowLeft } from "lucide-react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Navigation, Pagination, EffectFade } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
+import "swiper/css/effect-fade";
 
 
 function ViewAuditoriums() {
@@ -19,8 +23,13 @@ function ViewAuditoriums() {
       .then((data) => setAuditoriums(data))
       .catch((error) => console.error("Error fetching auditoriums:", error));
 
-  
+
   }, []);
+
+  const formatTime = (isoString) => {
+    // Convert "1970-01-01T10:00:00.000Z" → "10:00"
+    return isoString.split("T")[1].slice(0, 5); // Extract HH:MM from the ISO string
+  };
 
   const handleViewDetails = (auditorium) => {
     setSelectedAuditorium(auditorium);
@@ -29,16 +38,16 @@ function ViewAuditoriums() {
     const confirmationMessage = isUnderMaintenance
       ? "Are you sure you want to restore this auditorium?"
       : "Are you sure you want to move this auditorium to maintenance?";
-  
+
     if (!window.confirm(confirmationMessage)) return;
-  
+
     fetch(`http://localhost:5002/api/auditoriums/${id}/toggle-maintenance`, {
       method: "POST",
     })
       .then((response) => response.json())
       .then((data) => {
         alert(data.message || "Operation successful");
-  
+
         setAuditoriums((prev) => {
           if (isUnderMaintenance) {
             // Restore: Move from maintenance list to main list
@@ -49,7 +58,7 @@ function ViewAuditoriums() {
             return prev.filter((auditorium) => auditorium.id !== id);
           }
         });
-  
+
         setMaintenanceAuditoriums((prev) => {
           if (isUnderMaintenance) {
             // Remove from maintenance list after restore
@@ -63,17 +72,14 @@ function ViewAuditoriums() {
       })
       .catch((error) => console.error("Error toggling maintenance:", error));
   };
-  
+
   const handleEdit = (id) => {
-    navigate(`/CreateAuditorium/${id}`);
+    navigate(`/DashBoard/create-auditorium/${id}`);
   };
 
   return (
-    <div className="w-full h-screen flex flex-col bg-white text-black">
+    <div className="w-full h-screen flex flex-col bg-white text-black mt-6">
       <h1 className="text-3xl font-bold mb-6 text-center md:text-left px-6 pt-6">Admin - View Auditoriums</h1>
-      <button type="button" onClick={() => navigate(-1)} className="absolute top-4 left-4 flex items-center text-gray-700 hover:text-gray-900">
-        <ArrowLeft className="w-5 h-5 mr-1" /> Back
-      </button>
       <div className="flex-1 overflow-auto px-6">
         <div className="overflow-x-auto bg-gray-100 shadow-lg rounded-lg p-4">
           <table className="w-full border-collapse border border-gray-300">
@@ -97,42 +103,62 @@ function ViewAuditoriums() {
             </tbody>
           </table>
         </div>
-  
+
         {selectedAuditorium && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white text-black p-6 rounded-lg shadow-lg w-full max-w-lg relative">
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 p-2">
+            <div className="bg-white text-black p-4 rounded-md shadow-lg w-full max-w-md relative">
+              {/* Close Button */}
               <button
                 onClick={() => setSelectedAuditorium(null)}
-                className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-xl"
+                className="absolute top-0 right-0 text-gray-600 hover:text-gray-900 text-lg"
               >
                 ✖
               </button>
-              <Slider dots infinite speed={500} slidesToShow={1} slidesToScroll={1} className="rounded-lg">
+
+              {/* Image Swiper */}
+              <Swiper
+                modules={[Navigation, Pagination, EffectFade]}
+                navigation
+                pagination={{ clickable: true }}
+                effect="fade"
+                loop={true}
+                className="rounded-md overflow-hidden"
+              >
                 {selectedAuditorium.images.map((image, index) => (
-                  <div key={index} className="flex justify-center">
+                  <SwiperSlide key={index}>
                     <img
                       src={`data:${image.mimetype};base64,${image.data}`}
                       alt={`Slide ${index + 1}`}
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-40 object-cover rounded-md"
                     />
-                  </div>
+                  </SwiperSlide>
                 ))}
-              </Slider>
-              <h2 className="text-xl font-bold mt-4">{selectedAuditorium.name}</h2>
-              <p>{selectedAuditorium.description}</p>
-              <p><strong>Location:</strong> {selectedAuditorium.location}</p>
-              <p><strong>Capacity:</strong> {selectedAuditorium.capacity}</p>
-              <p><strong>Price per Hour:</strong> ₹{selectedAuditorium.price_per_hour}</p>
-              <p><strong>Amenities:</strong></p>
-              <ul className="list-disc list-inside">
+              </Swiper>
+
+              {/* Auditorium Details */}
+              <h2 className="text-lg font-bold mt-3">{selectedAuditorium.name}</h2>
+              <p className="text-sm mt-1">{selectedAuditorium.description}</p>
+              <p className="mt-1"><strong>📍 Location:</strong> {selectedAuditorium.location}</p>
+              <div className="text-sm mt-1 grid grid-cols-2 gap-x-8 gap-y-1">
+                <p><strong>👥 Capacity:</strong> {selectedAuditorium.capacity} People</p>
+                <p><strong>💰 Price per Hour:</strong> ₹{selectedAuditorium.price_per_hour}</p>
+                <p><strong>⏰ Open Time:</strong> {formatTime(selectedAuditorium.start_time)}</p>
+                <p><strong>⏳ Close Time:</strong> {formatTime(selectedAuditorium.end_time)}</p>
+              </div>
+
+              {/* Amenities Section */}
+              <p className="text-sm font-semibold mt-2">🎗 Amenities:</p>
+              <ul className="list-disc list-inside text-xs text-gray-700">
                 {selectedAuditorium.amenities.map((item, index) => (
                   <li key={index}>{item.name} - ₹{item.cost}</li>
                 ))}
               </ul>
             </div>
           </div>
+
+
         )}
-  
+
         <h2 className="text-xl font-semibold mt-8 text-center md:text-left">Under Maintenance</h2>
         <div className="overflow-x-auto bg-gray-100 shadow-lg rounded-lg p-4">
           <table className="w-full border-collapse border border-gray-300">
@@ -157,7 +183,7 @@ function ViewAuditoriums() {
       </div>
     </div>
   );
-  
+
 
 }
 
