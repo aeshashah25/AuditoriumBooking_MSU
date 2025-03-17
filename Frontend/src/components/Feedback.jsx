@@ -18,9 +18,9 @@ const Feedback = () => {
   }, []);
 
   return (
-    <div className="py-12 px-6 flex justify-center bg-gradient-to-b">
-      <div className="w-full max-w-6xl">
-        <h2 className="text-4xl font-extrabold text-center text-brown mb-10">
+    <div className="py-12 px-6 flex bg-white justify-center ">
+      <div className="w-full bg-white max-w-6xl">
+        <h2 className="text-4xl bg-white font-extrabold text-center text-brown mb-10">
           What Our Users Say
         </h2>
         <Swiper

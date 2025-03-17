@@ -1,7 +1,34 @@
 import { FaBuilding, FaUsers, FaCalendarCheck } from "react-icons/fa";
 import { useState, useEffect } from "react";
+import { motion, useAnimation } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 import axios from "axios";
-import aboutImage from "../assets/about_image.jpg"; // Ensure the correct path
+import aboutImage from "../assets/about_image.jpg";
+
+const FadeInWhenVisible = ({ children, direction = "up", delay = 0 }) => {
+  const controls = useAnimation();
+  const { ref, inView } = useInView({ triggerOnce: false, threshold: 0.2 });
+
+  useEffect(() => {
+    controls.start(
+      inView
+        ? { opacity: 1, y: 0, x: 0 }
+        : direction === "up"
+        ? { opacity: 0, y: 50 }
+        : direction === "down"
+        ? { opacity: 0, y: -50 }
+        : direction === "left"
+        ? { opacity: 0, x: -50 }
+        : { opacity: 0, x: 50 }
+    );
+  }, [controls, inView, direction]);
+
+  return (
+    <motion.div ref={ref} initial={{ opacity: 0, y: 50 }} animate={controls} transition={{ duration: 0.8, delay }}>
+      {children}
+    </motion.div>
+  );
+};
 
 const AboutUs = () => {
   const [counters, setCounters] = useState({
@@ -61,34 +88,21 @@ const AboutUs = () => {
         </div>
 
         {/* Counter Section */}
-        <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 w-full">
-          {/* Counter 1 - Auditoriums */}
-          <div className="flex flex-col items-center p-8 bg-white border rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <FaBuilding size={50} className="text-brown" />
-            <p className="mt-4 text-4xl font-extrabold text-gray-900">{counters.totalAuditoriums}</p>
-            <p className="mt-2 text-lg font-semibold text-gray-700">Auditoriums</p>
-          </div>
-
-          {/* Counter 2 - Events Hosted */}
-          <div className="flex flex-col items-center p-8 bg-white border rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <FaCalendarCheck size={50} className="text-green-600" />
-            <p className="mt-4 text-4xl font-extrabold text-gray-900">{counters.totalEvents}</p>
-            <p className="mt-2 text-lg font-semibold text-gray-700">Events Hosted</p>
-          </div>
-
-          {/* Counter 3 - Users Registered */}
-          <div className="flex flex-col items-center p-8 bg-white border rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <FaUsers size={50} className="text-purple-600" />
-            <p className="mt-4 text-4xl font-extrabold text-gray-900">{counters.totalUsers}</p>
-            <p className="mt-2 text-lg font-semibold text-gray-700">Users Registered</p>
-          </div>
-
-          {/* Counter 4 - Total Bookings */}
-          <div className="flex flex-col items-center p-8 bg-white border rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-            <FaCalendarCheck size={50} className="text-orange-600" />
-            <p className="mt-4 text-4xl font-extrabold text-gray-900">{counters.totalBookings}</p>
-            <p className="mt-2 text-lg font-semibold text-gray-700">Total Bookings</p>
-          </div>
+        <div className="mt-8 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 w-full">
+          {[
+            { icon: <FaBuilding size={40} className="text-brown" />, count: counters.totalAuditoriums, label: "Auditoriums" },
+            { icon: <FaCalendarCheck size={40} className="text-green-600" />, count: counters.totalEvents, label: "Events Hosted" },
+            { icon: <FaUsers size={40} className="text-purple-600" />, count: counters.totalUsers, label: "Users Registered" },
+            { icon: <FaCalendarCheck size={40} className="text-orange-600" />, count: counters.totalBookings, label: "Total Bookings" },
+          ].map((item, index) => (
+            <FadeInWhenVisible key={index} direction="up" delay={0.1 * index}>
+              <div className="flex flex-col items-center p-6 sm:p-8 bg-white border rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+                {item.icon}
+                <p className="mt-4 text-2xl sm:text-3xl font-extrabold text-gray-900">{item.count}</p>
+                <p className="mt-2 text-sm sm:text-lg font-semibold text-gray-700">{item.label}</p>
+              </div>
+            </FadeInWhenVisible>
+          ))}
         </div>
 
       </div>

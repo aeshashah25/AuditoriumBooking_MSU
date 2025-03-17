@@ -4,9 +4,9 @@ import { faPhone, faEnvelope, faGlobe } from '@fortawesome/free-solid-svg-icons'
 
 function Footer() {
     return (
-        <div className="max-w-screen-2xl container mx-auto md:px-20 px-4 flex flex-col md:flex-row my-10">
+        <div className="max-w-screen-2xl container bg-white mx-auto md:px-20 px-4 flex flex-col md:flex-row ">
             <hr />
-            <footer className="footer text-black-content p-10">
+            <footer className="footer bg-white  text-black-content p-10">
                 <aside>
                     <img src="logo.png" alt="logo" className="dark:invert britness- w-30 h-30" />{"  "}
                     <p className="text-gray-700 dark:text-white">
