@@ -78,15 +78,15 @@ function ViewAuditoriums() {
   };
 
   return (
-    <div className="w-full h-screen flex flex-col bg-white text-black mt-6">
+    <div className="h-screen flex flex-col bg-white text-black mt-5 ml-10">
       <h1 className="text-3xl font-bold mb-6 text-center md:text-left px-6 pt-6">Admin - View Auditoriums</h1>
       <div className="flex-1 overflow-auto px-6">
-        <div className="overflow-x-auto bg-gray-100 shadow-lg rounded-lg p-4">
+        <div className="w-full overflow-x-auto bg-gray-100 shadow-lg rounded-lg p-4">
           <table className="w-full border-collapse border border-gray-300">
             <thead className="bg-gray-200">
               <tr>
-                <th className="border border-gray-300 p-3 text-left">Name</th>
-                <th className="border border-gray-300 p-3 text-left">Actions</th>
+                <th className="border border-gray-300 p-3 text-left whitespace-nowrap">Name</th>
+                <th className="border border-gray-300 p-3 text-left whitespace-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
