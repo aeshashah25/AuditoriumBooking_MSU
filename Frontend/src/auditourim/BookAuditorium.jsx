@@ -40,14 +40,14 @@ function BookAuditorium() {
         console.error("❌ Error fetching booked slots:", error);
       }
     };
-  
+
     fetchBookedSlots();
   }, [id]);
-  
+
   const generateTimeSlots = (start, end) => {
     const startHour = parseInt(start.substring(0, 2), 10);
     const endHour = parseInt(end.substring(0, 2), 10);
-    
+
     let slots = [];
     for (let hour = startHour; hour < endHour; hour++) {
       slots.push(`${hour.toString().padStart(2, "0")}:00 - ${(hour + 1).toString().padStart(2, "0")}:00`);
@@ -60,24 +60,24 @@ function BookAuditorium() {
       setDateRange(update);
       return;
     }
-  
+
     // Convert selected dates to UTC to avoid timezone issues
     const start = new Date(Date.UTC(update[0].getFullYear(), update[0].getMonth(), update[0].getDate()));
     const end = new Date(Date.UTC(update[1].getFullYear(), update[1].getMonth(), update[1].getDate()));
-  
+
     let range = [];
     let tempDate = new Date(start);
-  
+
     while (tempDate <= end) {
       range.push(tempDate.toISOString().split("T")[0]); // Ensure correct date format
       tempDate.setUTCDate(tempDate.getUTCDate() + 1); // Use setUTCDate to avoid timezone shift
     }
-  
-    setDateRange([start, end]); 
+
+    setDateRange([start, end]);
     setSelectedDates(range);
   };
-  
-  
+
+
 
   const handleSingleDateChange = (date) => {
     const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
@@ -96,12 +96,12 @@ function BookAuditorium() {
   };
   const handleSlotChange = (date, slot) => {
     let updatedSlots = { ...selectedSlots };
-  
+
     if (isDateRangeMode) {
       // If range mode is active, apply the slot change to all dates in the range
       let newSlots = selectedDates.reduce((acc, d) => {
         let slotsForDate = updatedSlots[d] ? [...updatedSlots[d]] : [];
-        
+
         if (slotsForDate.includes(slot)) {
           // Remove the slot if it was already selected
           acc[d] = slotsForDate.filter((s) => s !== slot);
@@ -109,10 +109,10 @@ function BookAuditorium() {
           // Add the slot if it wasn't selected
           acc[d] = [...slotsForDate, slot];
         }
-        
+
         return acc;
       }, {});
-  
+
       setSelectedSlots(newSlots);
     } else {
       // Single-date mode: toggle the slot for just this date
@@ -121,12 +121,12 @@ function BookAuditorium() {
       } else {
         updatedSlots[date] = [...(updatedSlots[date] || []), slot];
       }
-  
+
       setSelectedSlots(updatedSlots);
     }
   };
-  
-  
+
+
   const handleAmenityChange = (amenity) => {
     setSelectedAmenities((prev) =>
       prev.includes(amenity.name) ? prev.filter((a) => a !== amenity.name) : [...prev, amenity.name]
@@ -146,27 +146,27 @@ function BookAuditorium() {
 
     let amenitiesCost = auditorium.amenities
       .filter((a) => selectedAmenities.includes(a.name))
-      .reduce((total, a) => total + a.cost, 0);
+      .reduce((total, a) => total + Number(a.cost), 0);
 
-    setTotalPrice(totalHours * auditorium.price_per_hour + amenitiesCost);
+    setTotalPrice(totalHours * Number(auditorium.price_per_hour) + amenitiesCost);
   }, [selectedSlots, selectedAmenities, selectedDates, auditorium]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     const userId = localStorage.getItem("user_id");
     if (!userId) {
       alert("User not logged in. Please log in first!");
       return;
     }
-  
+
     if (!eventName || selectedDates.length === 0) {
       alert("Please fill all fields!");
       return;
     }
-  
+
     let formattedDates = [];
-  
+
     if (isDateRangeMode) {
       // Store the date range with the selected time slots
       formattedDates.push({
@@ -180,7 +180,7 @@ function BookAuditorium() {
         time_slots: selectedSlots[date] || [],
       }));
     }
-  
+
     const bookingData = {
       user_id: parseInt(userId),
       auditorium_id: id,
@@ -189,7 +189,7 @@ function BookAuditorium() {
       amenities: selectedAmenities,
       total_price: totalPrice,
     };
-  
+
     try {
       const response = await fetch("http://localhost:5001/book-auditorium", {
         method: "POST",
@@ -198,7 +198,7 @@ function BookAuditorium() {
         },
         body: JSON.stringify(bookingData),
       });
-  
+
       if (response.ok) {
         alert("✅ Booking Successful!");
         setEventName("");
@@ -215,8 +215,8 @@ function BookAuditorium() {
       alert("❌ Error submitting booking. Please try again.");
     }
   };
-  
-  
+
+
   return (
     <div className="p-6 bg-white shadow-md rounded-md">
       <h2 className="text-2xl text-brown font-bold text-center">Book {auditorium.name}</h2>
@@ -232,70 +232,70 @@ function BookAuditorium() {
 
       <label className="block text-gray-600">Select Dates:</label>
       {isDateRangeMode ? (
-        <DatePicker selectsRange startDate={startDate} endDate={endDate} onChange={handleDateChange}   minDate={new Date(new Date().setDate(new Date().getDate() + 2))} 
-        inline />
+        <DatePicker selectsRange startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date(new Date().setDate(new Date().getDate() + 2))}
+          inline />
       ) : (
-        <DatePicker selected={null} onChange={handleSingleDateChange}   minDate={new Date(new Date().setDate(new Date().getDate() + 2))} 
-        inline />
+        <DatePicker selected={null} onChange={handleSingleDateChange} minDate={new Date(new Date().setDate(new Date().getDate() + 2))}
+          inline />
       )}
 
-{selectedDates.length > 0 && (
-  <div>
-    <h3 className="text-lg font-semibold">
-      {isDateRangeMode ? `Selected Date Range: ${selectedDates[0]} to ${selectedDates[selectedDates.length - 1]}` : "Selected Dates:"}
-    </h3>
+      {selectedDates.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold">
+            {isDateRangeMode ? `Selected Date Range: ${selectedDates[0]} to ${selectedDates[selectedDates.length - 1]}` : "Selected Dates:"}
+          </h3>
 
-    {!isDateRangeMode ? (
-      selectedDates.map((date, index) => (
-        <div key={index}>
-          <h4 className="text-md font-semibold mt-2">{date}</h4>
-          <div className="grid grid-cols-3 gap-2">
-            {timeSlots.map((slot, slotIndex) => (
-              <button
-              key={slotIndex}
-              className={`p-2 border rounded-md 
+          {!isDateRangeMode ? (
+            selectedDates.map((date, index) => (
+              <div key={index}>
+                <h4 className="text-md font-semibold mt-2">{date}</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {timeSlots.map((slot, slotIndex) => (
+                    <button
+                      key={slotIndex}
+                      className={`p-2 border rounded-md 
                 ${selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"} 
                 ${bookedSlots[date]?.includes(slot) ? "bg-gray-300 cursor-not-allowed opacity-50" : ""}`}
-              onClick={() => !bookedSlots[date]?.includes(slot) && handleSlotChange(date, slot)}
-              disabled={bookedSlots[date]?.includes(slot)}
-            >
-              {slot}
-            </button>
-            
-            ))}
-          </div>
-        </div>
-      ))
-    ) : (
-      <div>
-        <h4 className="text-md font-semibold mt-2">Time Slots:</h4>
-        <div className="grid grid-cols-3 gap-2">
-        {timeSlots.map((slot, slotIndex) => {
-  // Check if the slot is booked on ANY of the selected dates
-  const isBooked = selectedDates.some((date) => bookedSlots[date]?.includes(slot));
+                      onClick={() => !bookedSlots[date]?.includes(slot) && handleSlotChange(date, slot)}
+                      disabled={bookedSlots[date]?.includes(slot)}
+                    >
+                      {slot}
+                    </button>
 
-  return (
-    <button
-      key={slotIndex}
-      className={`p-2 border rounded-md 
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div>
+              <h4 className="text-md font-semibold mt-2">Time Slots:</h4>
+              <div className="grid grid-cols-3 gap-2">
+                {timeSlots.map((slot, slotIndex) => {
+                  // Check if the slot is booked on ANY of the selected dates
+                  const isBooked = selectedDates.some((date) => bookedSlots[date]?.includes(slot));
+
+                  return (
+                    <button
+                      key={slotIndex}
+                      className={`p-2 border rounded-md 
         ${selectedSlots[selectedDates[0]]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"} 
         ${isBooked ? "bg-gray-300 cursor-not-allowed opacity-50" : ""}`}
-      onClick={() => !isBooked && handleSlotChange(selectedDates[0], slot)}
-      disabled={isBooked}
-    >
-      {slot}
-    </button>
-  );
-})}
+                      onClick={() => !isBooked && handleSlotChange(selectedDates[0], slot)}
+                      disabled={isBooked}
+                    >
+                      {slot}
+                    </button>
+                  );
+                })}
 
 
+              </div>
+            </div>
+          )}
         </div>
-      </div>
-    )}
-  </div>
-)}
+      )}
 
-          <h3 className="text-lg font-semibold mt-4">Select Amenities:</h3>
+      <h3 className="text-lg font-semibold mt-4">Select Amenities:</h3>
       {auditorium.amenities.map((amenity, index) => (
         <div key={index} className="flex items-center">
           <input type="checkbox" checked={selectedAmenities.includes(amenity.name)} onChange={() => handleAmenityChange(amenity)} className="mr-2" />

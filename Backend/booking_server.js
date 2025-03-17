@@ -1,7 +1,8 @@
 import sql from 'mssql';
 import express from 'express';
 import cors from 'cors';
-import cron from 'node-cron';
+import nodemailer from "nodemailer";
+
 const router = express.Router();
 const app = express();
 
@@ -51,7 +52,7 @@ app.get("/booked-slots/:auditoriumId", async (req, res) => {
 
       try {
         let parsedDates = JSON.parse(booking.Dates); // ✅ Parse JSON from Dates column
-        
+
         if (!Array.isArray(parsedDates)) {
           throw new Error("Invalid JSON structure");
         }
@@ -80,8 +81,6 @@ app.get("/booked-slots/:auditoriumId", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-
-
 
 // Helper function to format time from SQL (Date string)
 function formatTimeFromSQL(timeString) {
@@ -125,7 +124,6 @@ app.post('/book-auditorium', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error', error: err.message });
   }
 });
-
 
 // ✅ Get booked slots for an auditorium
 app.get('/booked-slots/:id', async (req, res) => {
@@ -187,10 +185,10 @@ app.get('/get-all-bookings', async (req, res) => {
 
 // API to Approve or Reject Booking
 app.post("/update-booking-status", async (req, res) => {
-  const { booking_id, action, approved_discount, reject_reason } = req.body;
+  const { booking_id, action, approved_discount, reject_reason, user_email } = req.body;
 
-  if (!booking_id || !action) {
-    return res.status(400).json({ error: "Booking ID and action are required" });
+  if (!booking_id || !action || !user_email) {
+    return res.status(400).json({ error: "Booking ID and action ,  and user email are required" });
   }
 
   try {
@@ -220,13 +218,48 @@ app.post("/update-booking-status", async (req, res) => {
 
     let result = await request.execute("UpdateBookingStatus");
 
+    // Send Email Notification to User
+    // ✅ Send Email Notification after update
+    if (user_email) {
+      await sendEmailNotification(user_email, action, reject_reason,approved_discount);
+    }
+    //await sendEmailNotification(user_email, action, reject_reason, approved_discount);
+
     res.json(result.recordset[0]); // Return the message from the stored procedure
   } catch (error) {
     console.error("❌ Database Error:", error);
     return res.status(500).json({ error: "Internal Server Error" });
   }
 });
+// Function to Send Email Notification
+async function sendEmailNotification(email, action, rejectReason, discount) {
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: "jankichauhan2410@gmail.com", // Replace with your email
+      pass: "uhgj gglw snzg kjlx", // Replace with your app-specific password
+    },
+  });
 
+  let subject, message;
+  if (action === "approve") {
+    subject = "Booking Approved 🎉";
+    message = `Your booking has been approved! ${discount ? `A discount of ${discount}% has been applied.` : ""
+      }`;
+  } else {
+    subject = "Booking Rejected ❌";
+    message = `Your booking was rejected. Reason: ${rejectReason}`;
+  }
+
+  let mailOptions = {
+    from: "jankichauhan2410@gmail.com",
+    to: email,
+    subject: subject,
+    text: message,
+  };
+
+  await transporter.sendMail(mailOptions);
+}
 
 //admin View Payment Status
 app.get('/admin/view-payment-status', async (req, res) => {
@@ -395,96 +428,6 @@ app.get('/admin/completed-events', async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-// Send Payment Request and Update Total Amount
-app.post("/admin/send-payment-request", async (req, res) => {
-  const { bookingId, amount } = req.body;
-
-  // Validate input
-  if (!bookingId || isNaN(bookingId)) {
-    return res.status(400).json({ error: "Valid Booking ID is required" });
-  }
-
-  if (!amount || isNaN(amount) || amount <= 0) {
-    return res.status(400).json({ error: "Valid payment amount is required" });
-  }
-
-  try {
-    const pool = await poolPromise;
-
-    // Call the stored procedure
-    const result = await pool.request()
-      .input("bookingId", sql.Int, bookingId)
-      .input("amount", sql.Decimal(10, 2), amount)
-      .input("payment_due", sql.DateTime, new Date(Date.now() + 24 * 60 * 60 * 1000)) // 24 hours from now
-      .execute("ApproveBooking"); 
-
-    console.log("Stored Procedure Execution Result:", result.recordsets);
-
-    if (result.rowsAffected && result.rowsAffected[0] > 0) {
-      return res.status(200).json({ message: "Payment request sent successfully" });
-    } else {
-      return res.status(404).json({ error: "Booking ID not found or update failed" });
-    }
-  } catch (error) {
-    console.error("Error executing stored procedure:", error);
-    return res.status(500).json({ error: "Internal server error", details: error.message });
-  }
-});
-
-// Reject Booking API
-app.post("/admin/reject-booking", async (req, res) => {
-  const { bookingId } = req.body;
-
-  if (!bookingId || isNaN(bookingId)) {
-    return res.status(400).json({ success: false, message: "Valid Booking ID is required." });
-  }
-
-  try {
-    const pool = await poolPromise;
-    console.log("🔍 Rejecting Booking ID:", bookingId);
-
-    // Check if the booking exists before calling the stored procedure
-    const checkBooking = await pool.request()
-      .input("bookingId", sql.Int, bookingId)
-      .query("SELECT * FROM bookings WHERE id = @bookingId");
-
-    console.log("✅ Booking Found:", checkBooking.recordset);
-
-    if (checkBooking.recordset.length === 0) {
-      return res.status(404).json({ success: false, message: "Booking ID not found in database." });
-    }
-
-    // Debugging: Log before calling stored procedure
-    console.log("🚀 Executing Stored Procedure RejectBooking...");
-
-    // Call the stored procedure
-    const result = await pool.request()
-      .input("bookingId", sql.Int, bookingId)
-      .execute("RejectBooking");
-
-    console.log("✅ Stored Procedure Execution Result:", result);
-
-    // Debugging: Log the rows affected
-    console.log("🔍 Rows Affected:", result.rowsAffected);
-
-    // Check rows affected manually
-    if (result.rowsAffected.length > 0 && result.rowsAffected[0] > 0) {
-      console.log("✅ Booking successfully rejected!");
-      return res.status(200).json({ success: true, message: "Booking request rejected successfully." });
-    } else {
-      console.log("❌ No rows affected - Booking was already processed.");
-      return res.status(400).json({ success: false, message: "Booking was already rejected or processed." });
-    }
-    
-  } catch (error) {
-    console.error("❌ Error rejecting booking:", error);
-    return res.status(500).json({ success: false, message: "Internal server error.", error: error.message });
-  }
-});
-
-
-
 
 
 // Run every minute to update expired bookings 
