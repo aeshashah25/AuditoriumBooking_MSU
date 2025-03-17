@@ -219,22 +219,24 @@ function BookAuditorium() {
   
   return (
     <div className="p-6 bg-white shadow-md rounded-md">
-      <h2 className="text-2xl font-bold text-center">Book {auditorium.name}</h2>
+      <h2 className="text-2xl text-brown font-bold text-center">Book {auditorium.name}</h2>
 
       <label className="block text-gray-600">Event Name:</label>
-      <input type="text" value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full p-2 border rounded-md" placeholder="Enter Event Name" />
+      <input type="text " value={eventName} onChange={(e) => setEventName(e.target.value)} className="w-full p-2 border rounded-md bg-white font-black" placeholder="Enter Event Name" />
 
       <label className="block text-gray-600">Select Booking Type:</label>
-      <select onChange={(e) => setIsDateRangeMode(e.target.value === "range")} className="w-full p-2 border rounded-md">
+      <select onChange={(e) => setIsDateRangeMode(e.target.value === "range")} className="w-full p-2 border bg-white font-black rounded-md">
         <option value="multiple">Multiple time slots per date</option>
         <option value="range">Same time slots for date range</option>
       </select>
 
       <label className="block text-gray-600">Select Dates:</label>
       {isDateRangeMode ? (
-        <DatePicker selectsRange startDate={startDate} endDate={endDate} onChange={handleDateChange} minDate={new Date()} inline />
+        <DatePicker selectsRange startDate={startDate} endDate={endDate} onChange={handleDateChange}   minDate={new Date(new Date().setDate(new Date().getDate() + 2))} 
+        inline />
       ) : (
-        <DatePicker selected={null} onChange={handleSingleDateChange} minDate={new Date()} inline />
+        <DatePicker selected={null} onChange={handleSingleDateChange}   minDate={new Date(new Date().setDate(new Date().getDate() + 2))} 
+        inline />
       )}
 
 {selectedDates.length > 0 && (
