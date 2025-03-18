@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {FaArrowLeft} from 'react-icons/fa';
+import { FaArrowLeft } from 'react-icons/fa';
 
 function ViewEventStatus() {
     const [paymentRequests, setPaymentRequests] = useState([]);
@@ -45,15 +45,9 @@ function ViewEventStatus() {
 
     return (
         <div className="min-h-screen bg-gray-100 py-6 px-4 sm:px-6 lg:px-8">
-            <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-6xl mx-auto">
-            <button
-            onClick={() => navigate('/DashBoard')}
-            className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg shadow hover:bg-gray-500 transition"
-          >
-            <FaArrowLeft className="mr-2" /> Back
-          </button>
+            <div className="bg-white p-6 shadow-md w-full max-w-6xl mx-auto lg:ml-2">
                 <h2 className="text-2xl font-bold mb-4 text-center">View Event Status</h2>
-                
+
                 {/* Filters */}
                 <div className="flex flex-col sm:flex-row justify-between mb-4 space-y-4 sm:space-y-0">
                     <input
@@ -63,7 +57,7 @@ function ViewEventStatus() {
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="px-4 py-2 border rounded-md w-full sm:w-1/3"
                     />
-                    
+
                     {/* Auditorium Filter */}
                     <select
                         value={filterAuditorium}
