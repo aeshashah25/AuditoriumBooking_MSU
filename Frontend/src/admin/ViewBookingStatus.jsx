@@ -107,6 +107,7 @@ function ViewBookingStatus() {
                                 filteredRequests.map((request, index) => {
                                     const isApproved = request.booking_status.toLowerCase() === "approved";
                                     const isRejected = request.booking_status.toLowerCase() === "rejected";
+                                    const isConfirmed = request.booking_status.toLowerCase() === "confirmed";
 
                                     return (
                                         <tr key={index} className="text-center border-b">
@@ -129,41 +130,82 @@ function ViewBookingStatus() {
                                                         return <p className="text-gray-500">No dates available</p>;
                                                     }
 
-                                                    const sortedDates = parsedDates
-                                                        .map((dateObj) => ({
-                                                            date: dateObj.date || null,
-                                                            time_slots: Array.isArray(dateObj.time_slots) ? dateObj.time_slots.sort() : [],
-                                                        }))
-                                                        .sort((a, b) => new Date(a.date) - new Date(b.date));
+                                                    return parsedDates.map((entry, index) => {
+                                                        let dateText = entry.date_range || entry.date || "Unknown Date";
 
-                                                    return sortedDates.map((entry, index) => (
-                                                        <div key={index} className="text-xs mb-1 p-1 bg-gray-100 rounded">
-                                                            <span className="font-semibold">📅 {entry.date}</span>
-                                                            <br />
-                                                            🕒 {entry.time_slots.length > 0 ? entry.time_slots.join(", ") : "No time slots"}
-                                                        </div>
-                                                    ));
+                                                        // Convert date range to "DD Month YYYY to DD Month YYYY"
+                                                        if (entry.date_range) {
+                                                            const [startDate, endDate] = entry.date_range.split(" - ");
+                                                            const formattedStartDate = new Date(startDate).toLocaleDateString("en-GB", {
+                                                                day: "2-digit",
+                                                                month: "long",
+                                                                year: "numeric",
+                                                            });
+                                                            const formattedEndDate = new Date(endDate).toLocaleDateString("en-GB", {
+                                                                day: "2-digit",
+                                                                month: "long",
+                                                                year: "numeric",
+                                                            });
+                                                            dateText = `${formattedStartDate} to ${formattedEndDate}`;
+                                                        } else {
+                                                            dateText = new Date(dateText).toLocaleDateString("en-GB", {
+                                                                day: "2-digit",
+                                                                month: "long",
+                                                                year: "numeric",
+                                                            });
+                                                        }
+
+                                                        // Handle time slots correctly (single & multiple slots)
+                                                        let timeSlotsText = "No time slots";
+                                                        if (Array.isArray(entry.time_slots) && entry.time_slots.length > 0) {
+                                                            const sortedTimeSlots = entry.time_slots.sort(); // Ensure sorting
+
+                                                            if (sortedTimeSlots.length === 1) {
+                                                                timeSlotsText = sortedTimeSlots[0]; // Show single slot as is
+                                                            } else {
+                                                                const firstSlot = sortedTimeSlots[0].split(" - ")[0]; // Start time
+                                                                const lastSlot = sortedTimeSlots[sortedTimeSlots.length - 1].split(" - ")[1]; // End time
+                                                                timeSlotsText = `${firstSlot} to ${lastSlot}`;
+                                                            }
+                                                        }
+
+                                                        return (
+                                                            <div key={index} className="text-xs mb-1 p-1 bg-gray-100 rounded">
+                                                                <span className="font-semibold">📅 {dateText}</span>
+                                                                <br />
+                                                                🕒 {timeSlotsText}
+                                                            </div>
+                                                        );
+                                                    });
                                                 })()}
                                             </td>
 
+
                                             <td className="border p-2 font-semibold">
                                                 <span
-                                                    className={`px-2 py-1 rounded text-white ${isApproved ? "bg-green-500" :
-                                                        request.booking_status === "pending" ? "bg-yellow-500" :
-                                                            isRejected ? "bg-red-500" : "bg-gray-500"
+                                                    className={`px-2 py-1 rounded text-white ${request.booking_status === "approved"
+                                                        ? "bg-green-500"
+                                                        : request.booking_status === "pending"
+                                                            ? "bg-yellow-500"
+                                                            : request.booking_status === "rejected"
+                                                                ? "bg-red-500"
+                                                                : request.booking_status === "confirmed"
+                                                                    ? "bg-blue-500"
+                                                                    : "bg-gray-500"
                                                         }`}
                                                 >
                                                     {request.booking_status.charAt(0).toUpperCase() + request.booking_status.slice(1)}
                                                 </span>
                                             </td>
                                             <td className="border p-3 font-semibold">
-                                                {isApproved ? `${request.approved_discount}%` : "—"}
+                                                {isApproved || isConfirmed ? `${request.approved_discount}%` : "—"}
                                             </td>
+
                                             <td className="border p-3 font-semibold">
                                                 {isRejected ? request.reject_reason : "—"}
                                             </td>
                                             <td className="border p-3 font-semibold">
-                                                {isApproved ? `₹${request.discount_amount}` : "—"}
+                                                {isApproved || isConfirmed ? `₹${request.discount_amount}` : "—"}
                                             </td>
                                         </tr>
                                     );

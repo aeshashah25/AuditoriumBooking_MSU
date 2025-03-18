@@ -292,8 +292,8 @@ async function sendEmailNotification(email, action, eventName, dates, rejectReas
   if (action === "approve") {
     subject = "Booking Approved 🎉";
 
-    console.log(`📩 Payable Amount: ${discount_amount}`);
-    console.log(`📩 Total Amount before Discount: ${total_amount}`);
+    //console.log(`📩 Payable Amount: ${discount_amount}`);
+    //console.log(`📩 Total Amount before Discount: ${total_amount}`);
 
     message = `
       <p>Your booking request for <strong>${eventName}</strong> on:<br><br>${formattedDates}<br></p>`;
@@ -336,12 +336,11 @@ async function sendEmailNotification(email, action, eventName, dates, rejectReas
 
   try {
     await transporter.sendMail(mailOptions);
-    console.log("✅ Email Sent Successfully!");
+    //console.log("✅ Email Sent Successfully!");
   } catch (error) {
     console.error("❌ Error Sending Email:", error);
   }
 }
-
 
 //admin View Payment Status
 app.get('/admin/view-payment-status', async (req, res) => {
@@ -388,6 +387,7 @@ app.get('/admin/view-booking-status', async (req, res) => {
               b.id AS booking_id, 
               ud.name AS user_name, 
               a.name AS auditorium_name, 
+              b.event_name,
               b.Dates,
               b.booking_status,
               b.discount_amount,

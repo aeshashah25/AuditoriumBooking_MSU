@@ -98,7 +98,7 @@ function ViewBookingRequests() {
               <tbody>
                 {bookings.map((booking) => (
                   <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="border p-3">{booking.user_name} <br/>
+                    <td className="border p-3">{booking.user_name} <br />
                       <span className="text-xs text-gray-500">{booking.user_email}</span>
                     </td>
                     <td className="border p-3">{booking.auditorium_name}</td>
@@ -132,11 +132,8 @@ function ViewBookingRequests() {
                             currentRange.push(currentDate);
                           } else {
                             formattedDates.push({
-                              date_range:
-                                currentRange.length > 1
-                                  ? `${currentRange[0]} - ${currentRange[currentRange.length - 1]}`
-                                  : currentRange[0],
-                              time_slots: prevTimeSlots,
+                              date_range: formatDateRange(currentRange),
+                              time_slots: formatTimeSlots(prevTimeSlots),
                             });
 
                             currentRange = [currentDate];
@@ -145,25 +142,54 @@ function ViewBookingRequests() {
                         }
 
                         formattedDates.push({
-                          date_range:
-                            currentRange.length > 1
-                              ? `${currentRange[0]} - ${currentRange[currentRange.length - 1]}`
-                              : currentRange[0],
-                          time_slots: prevTimeSlots,
+                          date_range: formatDateRange(currentRange),
+                          time_slots: formatTimeSlots(prevTimeSlots),
                         });
 
                         return formattedDates.map((entry, index) => (
                           <div key={index} className="text-xs mb-1 p-1 bg-gray-100 rounded">
-                            <span className="font-semibold">
-                              📅 {entry.date_range ? entry.date_range : "Date not available"}
-                            </span>
+                            <span className="font-semibold">📅 {entry.date_range}</span>
                             <br />
-                            🕒 {entry.time_slots.length > 0 ? entry.time_slots.join(", ") : "No time slots"}
+                            🕒 {entry.time_slots}
                           </div>
                         ));
-                      })()}
 
+                        // Function to format a date range (e.g., "2025-03-17 - 2025-03-18" → "17 March 2025 to 18 March 2025")
+                        function formatDateRange(dateStr) {
+                          if (Array.isArray(dateStr)) {
+                            const startDate = formatDate(dateStr[0].split(" - ")[0]);
+                            const endDate = formatDate(dateStr[dateStr.length - 1].split(" - ").pop());
+                            return startDate === endDate ? startDate : `${startDate} to ${endDate}`;
+                          }
+                          return formatDate(dateStr.split(" - ")[0]) + " to " + formatDate(dateStr.split(" - ")[1]);
+                        }
+
+                        // Function to format an individual date (e.g., "2025-03-17" → "17 March 2025")
+                        function formatDate(dateStr) {
+                          if (!dateStr) return "Invalid Date";
+                          const date = new Date(dateStr.trim());
+                          return isNaN(date.getTime())
+                            ? "Invalid Date"
+                            : date.toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "long",
+                              year: "numeric",
+                            });
+                        }
+
+                        // Function to merge time slots into a range
+                        function formatTimeSlots(timeSlots) {
+                          if (timeSlots.length === 0) return "No time slots";
+                          if (timeSlots.length === 1) return timeSlots[0]; // If only one slot, keep as is
+
+                          const firstSlot = timeSlots[0].split(" - ")[0]; // Start time
+                          const lastSlot = timeSlots[timeSlots.length - 1].split(" - ")[1]; // End time
+                          return `${firstSlot} to ${lastSlot}`;
+                        }
+                      })()}
                     </td>
+
+
                     <td className="border p-3">{booking.event_name}</td>
                     <td className="border p-3">₹{booking.total_amount}</td>
                     {/* <td className="border p-3">
