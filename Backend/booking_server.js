@@ -313,8 +313,8 @@ app.post("/cancel-booking", async (req, res) => {
     expandedDates.forEach((entry) => {
       entry.time_slots.forEach((slot) => {
         const [startTime, endTime] = slot.split(" - ");
-        const slotStartDateTime = moment(${entry.date} ${startTime}, "YYYY-MM-DD HH:mm");
-        const slotEndDateTime = moment(${entry.date} ${endTime}, "YYYY-MM-DD HH:mm");
+        const slotStartDateTime = moment(`${entry.date} ${startTime}`, "YYYY-MM-DD HH:mm");
+        const slotEndDateTime = moment(`${entry.date} ${endTime}`, "YYYY-MM-DD HH:mm");
 
         if (!earliestTime || slotStartDateTime.isBefore(earliestTime)) {
           earliestTime = slotStartDateTime;
@@ -378,8 +378,8 @@ app.post("/cancel-booking", async (req, res) => {
       refundAmount = (refundPercentage / 100) * amountToDeductFrom;
     }
 
-    console.log(💰 Refund Percentage: ${refundPercentage}%);
-    console.log(💰 Refund Amount: ${refundAmount});
+    console.log(`💰 Refund Percentage:${refundPercentage}%`);
+    console.log(`💰 Refund Amount: ${refundAmount}`);
 
     // ✅ Step 7: Update database
     await pool.request()
