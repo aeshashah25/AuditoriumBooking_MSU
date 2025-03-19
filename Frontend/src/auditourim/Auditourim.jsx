@@ -6,15 +6,18 @@ import { motion } from "framer-motion"; // Import Framer Motion
 function Auditourim() {
   const navigate = useNavigate();
   const [auditourimData, setAuditourimData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]); // For filtered results
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(""); // 🔹 Search state
 
   useEffect(() => {
     const fetchAuditoriums = async () => {
       try {
         const response = await axios.get("http://localhost:5002/api/auditoriums");
         setAuditourimData(response.data);
+        setFilteredData(response.data); // Initially show all data
         setLoading(false);
       } catch (error) {
         console.error("Error fetching auditoriums:", error);
@@ -26,15 +29,52 @@ function Auditourim() {
     fetchAuditoriums();
   }, []);
 
+  // 🔹 Filter Function for Search by Name or Capacity
+  useEffect(() => {
+    if (!searchQuery) {
+      setFilteredData(auditourimData); // If no search query, show all
+      return;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    const isNumber = !isNaN(query); // Check if input is a number (capacity)
+
+    const filtered = auditourimData.filter((auditorium) => {
+      const nameMatch = auditorium.name.toLowerCase().includes(query);
+      const capacityMatch = isNumber ? auditorium.capacity >= parseInt(query) : false;
+      return nameMatch || capacityMatch;
+    });
+
+    setFilteredData(filtered);
+  }, [searchQuery, auditourimData]);
+
   const handleViewMore = () => {
     setShowAll(!showAll);
   };
 
-  const displayData = showAll ? auditourimData : auditourimData.slice(0, 4);
+  //const displayData = showAll ? auditourimData : auditourimData.slice(0, 4);
+  const displayData = showAll ? filteredData : filteredData.slice(0, 4);
 
   return (
     <div className="p-4">
-      <h1 className="text-3xl font-bold mb-6 text-black-800 text-center">Auditorium Details</h1>
+
+      {/* 🔹 Heading & Search Bar in Same Line */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        {/* Heading */}
+        <h1 className="text-2xl sm:text-3xl font-bold text-black-800 text-center sm:text-left">
+          Auditorium Details
+        </h1>
+
+        {/* Search Bar */}
+        <input
+          type="text"
+          placeholder="Search by Name or Capacity..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="px-4 py-2 border rounded-md w-full sm:w-96 md:w-80 lg:w-96 max-w-md 
+               focus:outline-none focus:ring-2 focus:ring-[#8B4513] transition duration-300"
+        />
+      </div>
 
       {/* Loading Spinner */}
       {loading ? (

@@ -39,6 +39,7 @@ function AuditoriumDetail() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-gray-100 relative">
+
       {/* Auditorium Details */}
       <div className="w-full max-w-screen-lg md:max-w-2xl lg:max-w-3xl bg-white shadow-lg rounded-lg p-6 relative transition-all">
         <div className="flex items-center justify-between w-full px-4 mt-4">
@@ -72,7 +73,7 @@ function AuditoriumDetail() {
                   <img
                     src={image}
                     alt={`Auditorium-${index + 1}`}
-                    className="w-full h-[320px] md:h-[400px] lg:h-[500px] object-cover rounded-lg"
+                    className="w-full h-[320px] md:h-[400px] lg:h-[320px] object-cover rounded-lg"
                   />
                 </SwiperSlide>
               ))}
@@ -81,19 +82,46 @@ function AuditoriumDetail() {
             <img
               src="default-image.jpg"
               alt="Default Auditorium"
-              className="w-full h-[320px] md:h-[400px] lg:h-[500px] object-cover rounded-lg"
+              className="w-full h-[200px] md:h-[400px] lg:h-[500px] object-cover rounded-lg"
             />
           )}
         </div>
 
         {/* Details Section */}
-        <div className="mt-6 space-y-4 text-gray-700 text-lg">
-          <p><strong>📍 Location:</strong> {auditorium.location}</p>
-          <p><strong>👥 Capacity:</strong> {auditorium.capacity} people</p>
-          <p><strong>⏰ Start Time:</strong> {auditorium.start_time}</p>
-          <p><strong>⏳ End Time:</strong> {auditorium.end_time}</p>
-          <p><strong>📝 Description:</strong> {auditorium.description || "No description available."}</p>
-          <p><strong>💰 Price per Hour:</strong> ₹{auditorium.price_per_hour}</p>
+
+        <div className="mt-4 space-y-4 text-gray-700 text-lg bg-white p-6 rounded-lg shadow-md">
+          {/* 📌 Auditorium Description */}
+          <p className="text-center italic text-gray-600">
+            {auditorium.description || "No description available."}
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 text-lg bg-white p-4 rounded-lg shadow-md">
+            {/* 📍 Location - Full Row */}
+            <div className="col-span-1 sm:col-span-2 flex items-center space-x-2">
+              <span className="text-xl">📍</span>
+              <p><strong>Location:</strong> {auditorium.location}</p>
+            </div>
+
+            {/* ⏰ Start Time & ⏳ End Time */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">⏰</span>
+              <p><strong>Open Time:</strong> {auditorium.start_time}</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">⏳</span>
+              <p><strong>Close Time:</strong> {auditorium.end_time}</p>
+            </div>
+
+            {/* 👥 Capacity & 💰 Price per Hour */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">👥</span>
+              <p><strong>Capacity:</strong> {auditorium.capacity} people</p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xl">💰</span>
+              <p><strong>Price per Hour:</strong> ₹{auditorium.price_per_hour}</p>
+            </div>
+          </div>
         </div>
 
         {/* Book Button */}
