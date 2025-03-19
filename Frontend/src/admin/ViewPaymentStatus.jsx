@@ -45,13 +45,7 @@ function ViewPaymentStatus() {
 
     return (
         <div className="min-h-screen bg-gray-100 py-6 px-4 sm:px-6 lg:px-8">
-            <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-6xl mx-auto">
-            <button
-            onClick={() => navigate('/DashBoard')}
-            className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg shadow hover:bg-gray-500 transition"
-          >
-            <FaArrowLeft className="mr-2" /> Back
-          </button>
+            <div className="bg-white p-6 shadow-md w-full max-w-6xl mx-auto lg:ml-2">
                 <h2 className="text-2xl font-bold mb-4 text-center">View Payment Status</h2>
                 
                 {/* Filters */}

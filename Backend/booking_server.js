@@ -187,7 +187,8 @@ app.get('/get-all-bookings', async (req, res) => {
 
 // API to Approve or Reject Booking
 app.post("/update-booking-status", async (req, res) => {
-  const { booking_id, action, approved_discount, reject_reason, user_email } = req.body;
+  //console.log("Received Request Body:", req.body); // Debugging line
+  const { booking_id, action, approved_discount, reject_reason, user_email, event_name, dates } = req.body;
 
   if (!booking_id || !action || !user_email) {
     return res.status(400).json({ error: "Booking ID and action ,  and user email are required" });
@@ -220,12 +221,18 @@ app.post("/update-booking-status", async (req, res) => {
 
     let result = await request.execute("UpdateBookingStatus");
 
-    // Send Email Notification to User
-    // ✅ Send Email Notification after update
+    // ✅ Fetch the updated discount amount from the database
+    let discountQuery = await pool
+      .request()
+      .input("BookingID", sql.Int, booking_id)
+      .query("SELECT discount_amount,total_amount FROM bookings WHERE id = @BookingID");
+
+    let updatedDiscountAmount = discountQuery.recordset[0]?.discount_amount || 0; // Ensure value is not null
+    let beforeDiscountAmount = discountQuery.recordset[0]?.total_amount || 0;
+    // ✅ Send Email Notification with the updated amount
     if (user_email) {
-      await sendEmailNotification(user_email, action, reject_reason,approved_discount);
+      await sendEmailNotification(user_email, action, event_name, JSON.parse(dates), reject_reason, approved_discount, updatedDiscountAmount, beforeDiscountAmount);
     }
-    //await sendEmailNotification(user_email, action, reject_reason, approved_discount);
 
     res.json(result.recordset[0]); // Return the message from the stored procedure
   } catch (error) {
@@ -233,6 +240,109 @@ app.post("/update-booking-status", async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+// Function to merge time slots and handle both 'date' and 'date_range'
+function mergeTimeSlots(dates) {
+  return dates.map(entry => {
+    let dateFormatted;
+
+    if (entry.date) {
+      // Format single date as "21 March 2025"
+      dateFormatted = new Date(entry.date).toLocaleDateString("en-GB", {
+        day: "2-digit", month: "long", year: "numeric"
+      });
+    } else if (entry.date_range) {
+      // Format date range as "21 March 2025 - 22 March 2025"
+      let [startDate, endDate] = entry.date_range.split(" - ");
+      let formattedStartDate = new Date(startDate).toLocaleDateString("en-GB", {
+        day: "2-digit", month: "long", year: "numeric"
+      });
+      let formattedEndDate = new Date(endDate).toLocaleDateString("en-GB", {
+        day: "2-digit", month: "long", year: "numeric"
+      });
+      dateFormatted = `<strong>${formattedStartDate} - ${formattedEndDate}</strong>`;
+    } else {
+      return "Invalid date format";
+    }
+
+    // Merge time slots into a single range
+    let timeSlots = entry.time_slots;
+    if (timeSlots.length === 0) return `${dateFormatted} (No time slots)`;
+
+    let startTime = timeSlots[0].split(" - ")[0]; // First slot start time
+    let endTime = timeSlots[timeSlots.length - 1].split(" - ")[1]; // Last slot end time
+
+    return `<strong>${dateFormatted}</strong> from <strong>${startTime} to ${endTime}</strong>`;
+  }).join("<br>");
+}
+
+// Function to Send Email Notification
+async function sendEmailNotification(email, action, eventName, dates, rejectReason, discount, discount_amount, total_amount) {
+  let transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  // ✅ Merge time slots before formatting
+  let formattedDates = mergeTimeSlots(dates);
+
+  let subject, message;
+
+  if (action === "approve") {
+    subject = "Booking Approved 🎉";
+
+    //console.log(`📩 Payable Amount: ${discount_amount}`);
+    //console.log(`📩 Total Amount before Discount: ${total_amount}`);
+
+    message = `
+      <p>Your booking request for <strong>${eventName}</strong> on:<br><br>${formattedDates}<br></p>`;
+
+    if (discount === 100) {
+      message += `
+          <p>🎉 <strong>Your booking is confirmed!</strong> No payment is required.</p>
+          <p>Enjoy your event at our auditorium! If you have any questions, feel free to contact us.</p>`;
+    } else if (discount > 0) {
+      message += `
+          <p>has been approved! 🎉</p>
+          <p>🎊 <strong>You have received a ${discount}% discount!</strong></p>
+          <p><strong>Original Price:</strong> ₹<s>${total_amount}</s></p>
+          <p><strong>Final Payable Amount:</strong> ₹<strong>${discount_amount}</strong></p>
+          <p>Please complete the payment using the QR code provided within <strong>24 hours</strong> to confirm your booking.</p>
+          <p><strong>Failure to pay within the time limit will result in automatic cancellation.</strong></p>`;
+    } else {
+      message += `
+          <p>has been approved! 🎉</p>
+          <p>The total amount payable is ₹<strong>${discount_amount}</strong>.</p>
+          <p><strong>Please complete the payment using the QR code</strong> within <strong>24 hours</strong> to confirm your booking.</p>
+          <p><strong>Failure to pay within the time limit will result in automatic cancellation.</strong></p>`;
+    }
+  } else {
+    subject = "Booking Rejected ❌";
+    message = `
+      <p> <strong>Unfortunately, your booking request for ${eventName}</strong> on:</p>
+      <p><strong>${formattedDates}</strong></p>
+      <p><strong>has been rejected</strong> due to: <strong>${rejectReason}</strong>.</p>
+      <p>If you have any questions, you can reply to this message for further clarification.</p>
+      <p>We apologize for any inconvenience caused.</p>`;
+  }
+
+  let mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: subject,
+    html: message,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    //console.log("✅ Email Sent Successfully!");
+  } catch (error) {
+    console.error("❌ Error Sending Email:", error);
+  }
+}
 
 
 
@@ -278,30 +388,25 @@ app.get('/admin/view-booking-status', async (req, res) => {
   try {
     const pool = await poolPromise;
     const query = `
-      SELECT 
-        b.id AS booking_id, 
-        ud.name AS user_name, 
-        a.name AS auditorium_name, 
-        FORMAT(b.date, 'yyyy-MM-dd') AS date,
-        b.start_time,
-        b.end_time,
-		    b.booking_status,
-        b.total_amount
-      FROM Bookings b
-      INNER JOIN UsersDetails ud ON b.UserId = ud.id
-      INNER JOIN Auditoriums a ON b.AuditoriumId = a.id;
+                SELECT 
+              b.id AS booking_id, 
+              ud.name AS user_name, 
+              a.name AS auditorium_name, 
+              b.event_name,
+              b.Dates,
+              b.booking_status,
+              b.discount_amount,
+              b.approved_discount,
+              b.reject_reason
+          FROM Bookings b
+          INNER JOIN UsersDetails ud ON b.UserId = ud.id
+          INNER JOIN Auditoriums a ON b.AuditoriumId = a.id
+          WHERE b.booking_status <> 'Pending';
     `;
 
     const result = await pool.request().query(query);
 
-    // Format the response data
-    const formattedResults = result.recordset.map(request => ({
-      ...request,
-      start_time: formatTimeFromSQL(request.start_time),  // Format start time
-      end_time: formatTimeFromSQL(request.end_time),  // Format end time
-    }));
-
-    res.json(formattedResults); // ✅ Send formatted JSON response
+    res.json(result.recordset); // ✅ Send formatted JSON response
 
   } catch (error) {
     console.error('Error fetching booking requests:', error);
@@ -404,7 +509,6 @@ app.get('/admin/completed-events', async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 // Run every minute to update expired bookings 
 // cron.schedule('* * * * *', async () => {
