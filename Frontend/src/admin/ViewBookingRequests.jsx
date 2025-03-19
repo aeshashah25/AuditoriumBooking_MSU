@@ -112,11 +112,14 @@ function ViewBookingRequests() {
                           .map((dateObj) => ({
                             date: dateObj.date || null,
                             date_range: dateObj.date_range || null,
-                            time_slots: Array.isArray(dateObj.time_slots) ? dateObj.time_slots.sort() : [],
+                            time_slots: Array.isArray(dateObj.time_slots)
+                              ? dateObj.time_slots.sort()
+                              : [],
                           }))
-                          .sort((a, b) =>
-                            new Date(a.date || a.date_range.split(" - ")[0]) -
-                            new Date(b.date || b.date_range.split(" - ")[0])
+                          .sort(
+                            (a, b) =>
+                              new Date(a.date || a.date_range.split(" - ")[0]) -
+                              new Date(b.date || b.date_range.split(" - ")[0])
                           );
 
                         const formattedDates = [];
@@ -154,7 +157,6 @@ function ViewBookingRequests() {
                           </div>
                         ));
 
-                        // Function to format a date range (e.g., "2025-03-17 - 2025-03-18" → "17 March 2025 to 18 March 2025")
                         function formatDateRange(dateStr) {
                           if (Array.isArray(dateStr)) {
                             const startDate = formatDate(dateStr[0].split(" - ")[0]);
@@ -164,7 +166,6 @@ function ViewBookingRequests() {
                           return formatDate(dateStr.split(" - ")[0]) + " to " + formatDate(dateStr.split(" - ")[1]);
                         }
 
-                        // Function to format an individual date (e.g., "2025-03-17" → "17 March 2025")
                         function formatDate(dateStr) {
                           if (!dateStr) return "Invalid Date";
                           const date = new Date(dateStr.trim());
@@ -177,18 +178,31 @@ function ViewBookingRequests() {
                             });
                         }
 
-                        // Function to merge time slots into a range
                         function formatTimeSlots(timeSlots) {
                           if (timeSlots.length === 0) return "No time slots";
-                          if (timeSlots.length === 1) return timeSlots[0]; // If only one slot, keep as is
+                          if (timeSlots.length === 1) return timeSlots[0];
 
-                          const firstSlot = timeSlots[0].split(" - ")[0]; // Start time
-                          const lastSlot = timeSlots[timeSlots.length - 1].split(" - ")[1]; // End time
-                          return `${firstSlot} to ${lastSlot}`;
+                          let groupedSlots = [];
+                          let startSlot = timeSlots[0].split(" - ")[0];
+                          let endSlot = timeSlots[0].split(" - ")[1];
+
+                          for (let i = 1; i < timeSlots.length; i++) {
+                            const [currentStart, currentEnd] = timeSlots[i].split(" - ");
+
+                            if (currentStart === endSlot) {
+                              endSlot = currentEnd;
+                            } else {
+                              groupedSlots.push(`${startSlot} - ${endSlot}`);
+                              startSlot = currentStart;
+                              endSlot = currentEnd;
+                            }
+                          }
+                          groupedSlots.push(`${startSlot} - ${endSlot}`);
+
+                          return groupedSlots.join(", ");
                         }
                       })()}
                     </td>
-
 
                     <td className="border p-3">{booking.event_name}</td>
                     <td className="border p-3">₹{booking.total_amount}</td>

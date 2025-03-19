@@ -116,70 +116,93 @@ function ViewBookingStatus() {
                                             <td className="border p-2">{request.auditorium_name}</td>
                                             <td className="border p-2">
                                                 {(() => {
-                                                    let parsedDates = [];
+                                                    if (!request.Dates) {
+                                                        return <p className="text-gray-500">No dates available</p>;
+                                                    }
 
+                                                    let parsedDates;
                                                     try {
-                                                        // Parse Dates only if it's a valid JSON string
                                                         parsedDates = JSON.parse(request.Dates);
                                                     } catch (error) {
-                                                        console.error("Error parsing Dates field:", error);
+                                                        console.error("Error parsing Dates JSON:", error);
                                                         return <p className="text-red-500">Invalid date format</p>;
                                                     }
 
                                                     if (!Array.isArray(parsedDates) || parsedDates.length === 0) {
-                                                        return <p className="text-gray-500">No dates available</p>;
+                                                        return <p className="text-gray-500">No valid dates available</p>;
                                                     }
 
-                                                    return parsedDates.map((entry, index) => {
-                                                        let dateText = entry.date_range || entry.date || "Unknown Date";
+                                                    const sortedDates = parsedDates
+                                                        .map((dateObj) => ({
+                                                            date: dateObj.date || null,
+                                                            date_range: dateObj.date_range || null,
+                                                            time_slots: Array.isArray(dateObj.time_slots) ? mergeTimeSlots(dateObj.time_slots) : [],
+                                                        }))
+                                                        .sort((a, b) => {
+                                                            const dateA = new Date(a.date || a.date_range?.split(" - ")[0]);
+                                                            const dateB = new Date(b.date || b.date_range?.split(" - ")[0]);
+                                                            return dateA - dateB;
+                                                        });
 
-                                                        // Convert date range to "DD Month YYYY to DD Month YYYY"
-                                                        if (entry.date_range) {
-                                                            const [startDate, endDate] = entry.date_range.split(" - ");
-                                                            const formattedStartDate = new Date(startDate).toLocaleDateString("en-GB", {
+                                                    return sortedDates.map(({ date, date_range, time_slots }, index) => (
+                                                        <div key={index} className="text-xs mb-1 p-1 bg-gray-100 rounded">
+                                                            <span className="font-semibold">
+                                                                📅 {date_range ? formatDateRange(date_range) : formatDate(date)}
+                                                            </span>
+                                                            <br />
+                                                            🕒 {time_slots.join(", ")}
+                                                        </div>
+                                                    ));
+
+                                                    function formatDate(dateStr) {
+                                                        if (!dateStr) return "Invalid Date";
+                                                        const date = new Date(dateStr.trim());
+                                                        return isNaN(date.getTime())
+                                                            ? "Invalid Date"
+                                                            : date.toLocaleDateString("en-GB", {
                                                                 day: "2-digit",
                                                                 month: "long",
                                                                 year: "numeric",
                                                             });
-                                                            const formattedEndDate = new Date(endDate).toLocaleDateString("en-GB", {
-                                                                day: "2-digit",
-                                                                month: "long",
-                                                                year: "numeric",
-                                                            });
-                                                            dateText = `${formattedStartDate} to ${formattedEndDate}`;
-                                                        } else {
-                                                            dateText = new Date(dateText).toLocaleDateString("en-GB", {
-                                                                day: "2-digit",
-                                                                month: "long",
-                                                                year: "numeric",
-                                                            });
-                                                        }
+                                                    }
 
-                                                        // Handle time slots correctly (single & multiple slots)
-                                                        let timeSlotsText = "No time slots";
-                                                        if (Array.isArray(entry.time_slots) && entry.time_slots.length > 0) {
-                                                            const sortedTimeSlots = entry.time_slots.sort(); // Ensure sorting
+                                                    function formatDateRange(dateRangeStr) {
+                                                        if (!dateRangeStr) return "Invalid Date";
+                                                        const [startDate, endDate] = dateRangeStr.split(" - ").map((d) => new Date(d.trim()));
+                                                        if (isNaN(startDate) || isNaN(endDate)) return "Invalid Date";
 
-                                                            if (sortedTimeSlots.length === 1) {
-                                                                timeSlotsText = sortedTimeSlots[0]; // Show single slot as is
+                                                        return `${startDate.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })} to ${endDate.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}`;
+                                                    }
+
+                                                    function mergeTimeSlots(timeSlots) {
+                                                        if (!Array.isArray(timeSlots) || timeSlots.length === 0) return [];
+
+                                                        // Sort time slots before merging
+                                                        const sortedSlots = timeSlots
+                                                            .map((slot) => {
+                                                                const [start, end] = slot.split(" - ");
+                                                                return { start, end };
+                                                            })
+                                                            .sort((a, b) => (a.start > b.start ? 1 : -1));
+
+                                                        let mergedSlots = [];
+                                                        let tempSlot = sortedSlots[0];
+
+                                                        for (let i = 1; i < sortedSlots.length; i++) {
+                                                            if (tempSlot.end === sortedSlots[i].start) {
+                                                                // If the end time of the previous slot matches the start of the next, merge them
+                                                                tempSlot.end = sortedSlots[i].end;
                                                             } else {
-                                                                const firstSlot = sortedTimeSlots[0].split(" - ")[0]; // Start time
-                                                                const lastSlot = sortedTimeSlots[sortedTimeSlots.length - 1].split(" - ")[1]; // End time
-                                                                timeSlotsText = `${firstSlot} to ${lastSlot}`;
+                                                                mergedSlots.push(`${tempSlot.start} - ${tempSlot.end}`);
+                                                                tempSlot = sortedSlots[i];
                                                             }
                                                         }
 
-                                                        return (
-                                                            <div key={index} className="text-xs mb-1 p-1 bg-gray-100 rounded">
-                                                                <span className="font-semibold">📅 {dateText}</span>
-                                                                <br />
-                                                                🕒 {timeSlotsText}
-                                                            </div>
-                                                        );
-                                                    });
+                                                        mergedSlots.push(`${tempSlot.start} - ${tempSlot.end}`);
+                                                        return mergedSlots;
+                                                    }
                                                 })()}
                                             </td>
-
 
                                             <td className="border p-2 font-semibold">
                                                 <span
