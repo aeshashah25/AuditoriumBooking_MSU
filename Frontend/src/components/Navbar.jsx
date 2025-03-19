@@ -56,7 +56,7 @@ const App = () => {
       {/* Mobile Dropdown Menu */}
       <div className={`lg:hidden flex flex-col items-center bg-white transition-all duration-300 overflow-hidden ${menuOpen ? "max-h-screen opacity-100 py-4" : "max-h-0 opacity-0"}`}>
         <Link to="/" className="text-lg font-bold text-black hover:text-blue-500 transition duration-300 py-2">Home</Link>
-        <Link to="/contact" className="text-lg font-bold text-black hover:text-blue-500 transition duration-300 py-2">Contact</Link>
+        {/* <Link to="/contact" className="text-lg font-bold text-black hover:text-blue-500 transition duration-300 py-2">Contact</Link> */}
         <Link to="/about" className="text-lg font-bold text-black hover:text-blue-500 transition duration-300 py-2">About</Link>
 
         {/* Login Button (Only visible in dropdown on small screens) */}

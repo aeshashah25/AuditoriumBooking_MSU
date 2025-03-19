@@ -69,9 +69,9 @@ function Footer() {
                         <li>
                             <a href="/about" className="text-gray-700 dark:text-gray-300 hover:text-brown dark:hover:text-brown-dark font-medium text-lg">About</a>
                         </li>
-                        <li>
+                        {/* <li>
                             <a href="/contact" className="text-gray-700 dark:text-gray-300 hover:text-brown dark:hover:text-brown-dark font-medium text-lg">Contact</a>
-                        </li>
+                        </li> */}
                         <li>
                             <a href="/feedback" className="text-gray-700 dark:text-gray-300 hover:text-brown dark:hover:text-brown-dark font-medium text-lg">Feedback</a>
                         </li>
