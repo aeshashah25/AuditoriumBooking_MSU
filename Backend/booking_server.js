@@ -241,162 +241,91 @@ app.post("/update-booking-status", async (req, res) => {
   }
 });
 
-app.post("/cancel-booking", async (req, res) => {
-  const { bookingId } = req.body;
+
+// Cancel booking API
+app.get('/cancel-booking/:bookingId', async (req, res) => {
+  const bookingId = req.params.bookingId;
 
   try {
-    const pool = await poolPromise;
-    
-    // Fetch booking details
-    const result = await pool.request()
-      .input("bookingId", sql.Int, bookingId)
-      .query(`
-        SELECT booking_status, event_status, total_amount, discount_amount, Dates 
-        FROM bookings 
-        WHERE id = @bookingId
-      `);
+    const pool = await sql.connect(process.env.DB_CONNECTION_STRING);
 
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ error: "Booking not found" });
-    }
-
-    const booking = result.recordset[0];
-    const { booking_status, event_status, total_amount, discount_amount, Dates } = booking;
-
-    console.log("📌 Booking Data:", booking);
-
-    let dates;
-    try {
-      dates = JSON.parse(Dates);
-    } catch (error) {
-      console.error("❌ Error parsing JSON:", error);
-      return res.status(500).json({ error: "Invalid booking time slots" });
-    }
-
-    if (!Array.isArray(dates) || dates.length === 0) {
-      return res.status(400).json({ error: "Invalid booking time slots" });
-    }
-
-    // ✅ Step 1: Convert date ranges into individual dates
-    let expandedDates = [];
-
-    dates.forEach((entry) => {
-      if (entry.date_range) {
-        const [startDate, endDate] = entry.date_range.split(" - ");
-        let currentDate = moment(startDate, "YYYY-MM-DD");
-
-        while (currentDate.isSameOrBefore(moment(endDate, "YYYY-MM-DD"))) {
-          expandedDates.push({
-            date: currentDate.format("YYYY-MM-DD"),
-            time_slots: entry.time_slots,
-          });
-          currentDate.add(1, "day");
-        }
-      } else {
-        expandedDates.push(entry);
-      }
-    });
-
-    console.log("✅ Expanded Dates:", expandedDates);
-
-    // ✅ Step 2: Remove empty time slot dates
-    expandedDates = expandedDates.filter((entry) => entry.time_slots.length > 0);
-
-    if (expandedDates.length === 0) {
-      return res.status(400).json({ error: "No valid time slots found for cancellation" });
-    }
-
-    // ✅ Step 3: Find earliest and latest time slots
-    let earliestTime = null;
-    let latestTime = null;
-
-    expandedDates.forEach((entry) => {
-      entry.time_slots.forEach((slot) => {
-        const [startTime, endTime] = slot.split(" - ");
-        const slotStartDateTime = moment(`${entry.date} ${startTime}`, "YYYY-MM-DD HH:mm");
-        const slotEndDateTime = moment(`${entry.date} ${endTime}`, "YYYY-MM-DD HH:mm");
-
-        if (!earliestTime || slotStartDateTime.isBefore(earliestTime)) {
-          earliestTime = slotStartDateTime;
-        }
-        if (!latestTime || slotEndDateTime.isAfter(latestTime)) {
-          latestTime = slotEndDateTime;
-        }
-      });
-    });
-
-    if (!earliestTime || !latestTime) {
-      return res.status(400).json({ error: "Invalid booking data (missing valid time slots)" });
-    }
-
-    console.log("✅ Earliest Booking Time:", earliestTime.format("YYYY-MM-DD HH:mm"));
-    console.log("✅ Latest Booking Time:", latestTime.format("YYYY-MM-DD HH:mm"));
-
-    const now = moment();
-    console.log("🕒 Current Time:", now.format("YYYY-MM-DD HH:mm"));
-
-    // ✅ Step 4: If the latest booking time has passed, mark as complete (No refund)
-    if (now.isAfter(latestTime)) {
-      console.log("🚫 Event has already ended, marking as complete. No refund!");
-
-      await pool.request()
-        .input("bookingId", sql.Int, bookingId)
-        .input("refundAmount", sql.Decimal(10, 2), 0)
-        .query(`
-          UPDATE bookings 
-          SET booking_status = 'complete', event_status = 'complete', refund_amount = @refundAmount 
-          WHERE id = @bookingId
-        `);
-
-      return res.json({ message: "Event is complete, no refund!", refundAmount: 0 });
-    }
-
-    // ✅ Step 5: Calculate refund percentage based on earliest time slot
-    let refundPercentage = 0;
-    const hoursDiff = earliestTime.diff(now, "hours");
-
-    console.log("🕒 Hours Until Booking:", hoursDiff);
-
-    if (booking_status === "rejected") {
-      refundPercentage = 100; // Full refund for rejected bookings
-    } else {
-      if (hoursDiff < 6) {
-        refundPercentage = 0;
-      } else if (hoursDiff < 12) {
-        refundPercentage = 30;
-      } else if (hoursDiff < 24) {
-        refundPercentage = 50;
-      } else {
-        refundPercentage = 100;
-      }
-    }
-
-    // ✅ Step 6: Calculate refund amount
-    let refundAmount = 0;
-    if (refundPercentage > 0) {
-      let amountToDeductFrom = discount_amount ? discount_amount : total_amount;
-      refundAmount = (refundPercentage / 100) * amountToDeductFrom;
-    }
-
-    console.log(`💰 Refund Percentage:${refundPercentage}%`);
-    console.log(`💰 Refund Amount: ${refundAmount}`);
-
-    // ✅ Step 7: Update database
+    // Execute stored procedure to cancel the booking
     await pool.request()
-      .input("bookingId", sql.Int, bookingId)
-      .input("refundAmount", sql.Decimal(10, 2), refundAmount)
+      .input('bookingId', sql.Int, bookingId)
+      .execute('sp_CancelBooking');
+
+    // Fetch user details, auditorium name, and refund amount
+    const queryResult = await pool.request()
+      .input('bookingId', sql.Int, bookingId)
       .query(`
-        UPDATE bookings 
-        SET booking_status = 'cancelled', refund_amount = @refundAmount 
-        WHERE id = @bookingId
+        SELECT 
+          u.name, 
+          u.email, 
+          a.name AS auditorium_name,
+          b.refund_amount
+        FROM bookings b
+        JOIN UsersDetails u ON b.UserID = u.id
+        JOIN auditoriums a ON b.AuditoriumID = a.id
+        WHERE b.id = @bookingId
       `);
 
-    res.json({ message: "Booking cancelled successfully", refundAmount });
+    if (queryResult.recordset.length === 0) {
+      return res.status(404).json({ error: 'Booking not found' });
+    }
+
+    const { username, email, auditorium_name, refund_amount } = queryResult.recordset[0];
+
+    // Send cancellation email
+    await sendCancellationEmail(username, email, bookingId, auditorium_name, refund_amount);
+
+    res.json({
+      message: 'Booking successfully cancelled. Email sent to user.'
+    });
+
   } catch (error) {
-    console.error("❌ Error cancelling booking:", error);
-    res.status(500).json({ error: "Failed to cancel booking" });
+    console.error('Error cancelling booking:', error);
+    res.status(500).json({ error: 'Error cancelling booking' });
   }
 });
+
+// Function to send cancellation email
+async function sendCancellationEmail(username, email, bookingId, auditoriumName, refundAmount) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Booking Cancellation Confirmation',
+    text: `
+      Dear ${username},
+
+      Your booking (ID: ${bookingId}) at ${auditoriumName} has been successfully cancelled.
+
+      Refund Details:
+      - If cancelled before 24 hours, you will receive a full refund.
+      - If cancelled between 24 to 12 hours, you will receive a 50% refund.
+      - If cancelled between 12 to 6 hours, you will receive a 30% refund.
+      - If cancelled after 6 hours, no refund is applicable.
+
+      Your refund amount is ₹${refundAmount} and will be reflected back to your account within 24 hours. 
+      If you do not receive it, please contact the administrator.
+
+      Regards,
+      Maharaja Sayajirao University,vadodara
+    `
+  };
+
+  await transporter.sendMail(mailOptions);
+}
+
 
 // Function to merge time slots and handle both 'date' and 'date_range'
 function mergeTimeSlots(dates) {
