@@ -251,10 +251,22 @@ const upload = multer({ storage });
 // Route to update user profile including the profile picture
 app.put("/api/user/update", verifyToken, upload.single("profilePic"), async (req, res) => {
   const { name, email, phone } = req.body;
-  const profilePic = req.file ? req.file.buffer : null; // Extract binary data from the uploaded file
+  const newProfilePic = req.file ? req.file.buffer : null; // Get new image if uploaded
 
   try {
     const pool = await sql.connect(dbConfig);
+
+    // Fetch existing profilePic if no new image is uploaded
+    let profilePic = newProfilePic;
+    if (!newProfilePic) {
+      const result = await pool
+        .request()
+        .input("id", sql.Int, req.user.id)
+        .query("SELECT profilePic FROM UsersDetails WHERE id = @id");
+
+      profilePic = result.recordset[0]?.profilePic || null; // Retain existing image if available
+    }
+
     await pool
       .request()
       .input("name", sql.NVarChar, name)
@@ -273,7 +285,6 @@ app.put("/api/user/update", verifyToken, upload.single("profilePic"), async (req
     res.status(500).json({ message: "Error updating profile", error: error.message });
   }
 });
-
 
 app.get('/api/user/profile-pic/:userId', verifyToken, async (req, res) => {
   const { userId } = req.params;
