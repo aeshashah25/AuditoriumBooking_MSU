@@ -9,7 +9,8 @@ const MainPage = () => {
   const [profilePicUrl, setProfilePicUrl] = useState(null);
   const [tokenExpiration, setTokenExpiration] = useState(null);
   const [auditoriums, setAuditoriums] = useState([]);
-
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  
   // Feedback states
   const [selectedAuditorium, setSelectedAuditorium] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -93,7 +94,6 @@ const MainPage = () => {
       return;
     }
 
-  
     const feedbackData = {
       auditoriumId: parseInt(selectedAuditorium),
       userId: parseInt(storedUserId),
@@ -136,8 +136,6 @@ const MainPage = () => {
     fetchAuditoriums();
   }, []);
 
-
-
   const handleLogout = () => {
     localStorage.clear();
     setUser(null);
@@ -152,37 +150,40 @@ const MainPage = () => {
         <>
           {/* Responsive Navbar */}
           <div className="w-full flex justify-between items-center bg-white p-4 shadow-lg rounded-lg">
-            <span className="text-xl font-semibold text-gray-800">Welcome, {user.name}!</span>
+            <span className="text-xl font-semibold text-gray-800">Welcome, {user?.name}!</span>
 
             <div className="flex items-center gap-4">
               <button
-                className="px-4 py-2 bg-white text-brown-light  rounded-md hover:bg-brown hover:text-white transition"
+                className="px-4 py-2 bg-white text-brown-light rounded-md hover:bg-brown hover:text-white transition"
                 onClick={() => navigate("/your-booking-page")}
               >
                 View Booking
               </button>
 
-
               {/* Profile Dropdown */}
-              <div className="relative group">
+              <div className="relative">
                 <img
                   src={profilePicUrl || "/path/to/defaultProfilePic.jpg"}
                   alt="Profile"
-                  className="w-14 h-14 rounded-full border-2 border-gray-300 cursor-pointer group-hover:shadow-lg"
+                  className="w-14 h-14 rounded-full border-2 border-gray-300 cursor-pointer"
+                  onClick={() => setDropdownOpen(!dropdownOpen)} // Toggle dropdown on click
                 />
-                <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-48 opacity-0 group-hover:opacity-100 transition-opacity z-50">
-                  <ul className="py-2">
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleUpdate}>
-                      Update Profile
-                    </li>
-                    <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => setShowFeedbackPopup(true)}>
-                      Feedback
-                    </li>
-                    <li className="px-4 py-2 text-red-500 hover:bg-gray-100 cursor-pointer" onClick={handleLogout}>
-                      Logout
-                    </li>
-                  </ul>
-                </div>
+
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 bg-white shadow-lg rounded-lg w-48 z-50">
+                    <ul className="py-2">
+                      <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleUpdate}>
+                        Update Profile
+                      </li>
+                      <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => setDropdownOpen(false)}>
+                        Feedback
+                      </li>
+                      <li className="px-4 py-2 text-red-500 hover:bg-gray-100 cursor-pointer" onClick={handleLogout}>
+                        Logout
+                      </li>
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </div>

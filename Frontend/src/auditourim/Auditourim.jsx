@@ -1,23 +1,25 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion"; // Import Framer Motion
+import { motion } from "framer-motion";
+import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa"; // Import sorting icons
 
 function Auditourim() {
   const navigate = useNavigate();
   const [auditourimData, setAuditourimData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]); // For filtered results
+  const [filteredData, setFilteredData] = useState([]);
   const [showAll, setShowAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState(""); // 🔹 Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState(null); // Sorting state
 
   useEffect(() => {
     const fetchAuditoriums = async () => {
       try {
         const response = await axios.get("http://localhost:5002/api/auditoriums");
         setAuditourimData(response.data);
-        setFilteredData(response.data); // Initially show all data
+        setFilteredData(response.data);
         setLoading(false);
       } catch (error) {
         console.error("Error fetching auditoriums:", error);
@@ -29,37 +31,48 @@ function Auditourim() {
     fetchAuditoriums();
   }, []);
 
-  // 🔹 Filter Function for Search by Name or Capacity
+  // 🔹 Search Filter
   useEffect(() => {
-    if (!searchQuery) {
-      setFilteredData(auditourimData); // If no search query, show all
-      return;
+    let result = auditourimData;
+
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase().trim();
+      const isNumber = !isNaN(query);
+
+      result = auditourimData.filter((auditorium) => {
+        const nameMatch = auditorium.name.toLowerCase().includes(query);
+        const capacityMatch = isNumber ? auditorium.capacity >= parseInt(query) : false;
+        return nameMatch || capacityMatch;
+      });
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    const isNumber = !isNaN(query); // Check if input is a number (capacity)
+    // 🔹 Apply Sorting
+    if (sortOrder !== null) {
+      result = [...result].sort((a, b) =>
+        sortOrder === "asc" ? a.price_per_hour - b.price_per_hour : b.price_per_hour - a.price_per_hour
+      );
+    }
 
-    const filtered = auditourimData.filter((auditorium) => {
-      const nameMatch = auditorium.name.toLowerCase().includes(query);
-      const capacityMatch = isNumber ? auditorium.capacity >= parseInt(query) : false;
-      return nameMatch || capacityMatch;
-    });
-
-    setFilteredData(filtered);
-  }, [searchQuery, auditourimData]);
+    setFilteredData(result);
+  }, [searchQuery, auditourimData, sortOrder]);
 
   const handleViewMore = () => {
     setShowAll(!showAll);
   };
 
-  //const displayData = showAll ? auditourimData : auditourimData.slice(0, 4);
+  // 🔹 Toggle Sorting Order
+  const toggleSortOrder = () => {
+    setSortOrder((prevOrder) => (prevOrder === "asc" ? "desc" : "asc"));
+  };
+
   const displayData = showAll ? filteredData : filteredData.slice(0, 4);
 
   return (
     <div className="p-4">
 
-      {/* 🔹 Heading & Search Bar in Same Line */}
+      {/* 🔹 Heading, Search, and Sort in a Row */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+
         {/* Heading */}
         <h1 className="text-2xl sm:text-3xl font-bold text-black-800 text-center sm:text-left">
           Auditorium Details
@@ -74,6 +87,16 @@ function Auditourim() {
           className="px-4 py-2 border rounded-md w-full sm:w-96 md:w-80 lg:w-96 max-w-md 
                focus:outline-none focus:ring-2 focus:ring-[#8B4513] transition duration-300"
         />
+
+        {/* 🔹 Sort Button */}
+        <button
+          onClick={toggleSortOrder}
+          className="flex items-center gap-2 px-4 py-2 border rounded-md bg-white shadow-md 
+                 hover:bg-gray-100 transition duration-300"
+        >
+          Sort by Price{" "}
+          {sortOrder === "asc" ? <FaSortUp /> : sortOrder === "desc" ? <FaSortDown /> : <FaSort />}
+        </button>
       </div>
 
       {/* Loading Spinner */}
@@ -99,13 +122,13 @@ function Auditourim() {
               <motion.div
                 key={auditorium.id}
                 className="relative w-full h-96 [perspective:1200px]"
-                initial={{ opacity: 0, scale: 0.8, rotateX: -30 }} // Starts smaller and slightly tilted
-                whileInView={{ opacity: 1, scale: 1, rotateX: 0 }} // Grows into full size
-                viewport={{ once: true, amount: 0.2 }} // Triggers when 20% is in view
+                initial={{ opacity: 0, scale: 0.8, rotateX: -30 }}
+                whileInView={{ opacity: 1, scale: 1, rotateX: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
                 transition={{
                   duration: 1.2,
-                  ease: [0.25, 1, 0.5, 1], // Smooth easing
-                  delay: index * 0.1, // Stagger effect
+                  ease: [0.25, 1, 0.5, 1],
+                  delay: index * 0.1,
                 }}
               >
 
@@ -131,20 +154,21 @@ function Auditourim() {
                     <p className="mt-4">
                       <strong>Location:</strong> {auditorium.location}
                     </p>
-                    <p className="">
+                    <p>
                       <strong>Capacity:</strong> {auditorium.capacity} people
                     </p>
-                    <p className="">
+                    <p>
+                      <strong>Price:</strong> ₹{auditorium.price_per_hour}
+                    </p>
+                    <p>
                       <strong>Amenities:</strong> {amenitiesList}
                     </p>
                   </div>
-
 
                   {/* Back Side */}
                   <div className="absolute w-full h-full bg-gradient-to-r from-[#6B4226] to-[#8D5A3B] text-white 
                 flex flex-col items-center justify-center p-6 rounded-xl [backface-visibility:hidden] 
                 [transform:rotateY(180deg)] shadow-xl relative overflow-hidden">
-                    {/* Transparent Image in Background */}
                     <div className="absolute inset-0 flex justify-center items-center opacity-30">
                       <img
                         src={imageUrls[0]}
@@ -153,14 +177,9 @@ function Auditourim() {
                         onError={(e) => (e.target.src = '/placeholder.png')}
                       />
                     </div>
-                    {/* Auditorium Name (Fixed for Responsive Adjustment) */}
-                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-center uppercase tracking-wide 
-                 relative z-10 drop-shadow-lg text-transparent bg-clip-text 
-                 bg-gradient-to-r from-white/80 to-gray-300/80 px-4 py-2 
-                 rounded-lg max-w-[80%] w-auto mx-auto whitespace-normal">
+                    <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-extrabold text-center uppercase tracking-wide relative z-10 drop-shadow-lg text-transparent bg-clip-text bg-gradient-to-r from-white/80 to-gray-300/80 px-4 py-2 rounded-lg max-w-[80%] w-auto mx-auto whitespace-normal">
                       {auditorium.name}
                     </h1>
-                    {/* Button Section */}
                     <button
                       className="px-4 py-2 bg-white text-[#87553B] font-semibold rounded-full shadow-md relative z-10 
                hover:bg-gray-200 hover:shadow-lg transition duration-300 transform hover:scale-105 mt-4"
@@ -169,8 +188,6 @@ function Auditourim() {
                       📅 View More Details
                     </button>
                   </div>
-                  {/* End Back Side */}
-
                 </div>
               </motion.div>
             );
@@ -187,6 +204,7 @@ function Auditourim() {
           {showAll ? "View Less" : "View More"}
         </button>
       </div>
+
     </div>
   );
 }
