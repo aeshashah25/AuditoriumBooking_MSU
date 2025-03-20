@@ -24,7 +24,12 @@ const FadeInWhenVisible = ({ children, direction = "up", delay = 0 }) => {
   }, [controls, inView, direction]);
 
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 50 }} animate={controls} transition={{ duration: 0.8, delay }}>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={controls}
+      transition={{ duration: 0.8, delay }}
+    >
       {children}
     </motion.div>
   );
@@ -38,6 +43,11 @@ const AboutUs = () => {
     totalEvents: 0,
   });
 
+  const { ref: aboutRef, inView: aboutInView } = useInView({
+    triggerOnce: false,
+    threshold: 0.2,
+  });
+
   useEffect(() => {
     axios
       .get("http://localhost:5002/api/dashboard-counters")
@@ -46,6 +56,7 @@ const AboutUs = () => {
       })
       .catch((error) => console.error("Error fetching data:", error));
   }, []);
+
   return (
     <div className="bg-gray-100 py-16 px-6 flex justify-center">
       <div className="container mx-auto flex flex-col gap-12">
@@ -53,8 +64,13 @@ const AboutUs = () => {
         {/* Image & Content Section */}
         <div className="flex flex-col-reverse lg:flex-row items-center gap-12">
 
-          {/* Left Side - Image */}
-          <div className="relative w-full lg:w-1/2 flex justify-center">
+          {/* Left Side - Animated Image */}
+          <motion.div
+            initial={{ opacity: 0, x: -100 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1 }}
+            className="relative w-full lg:w-1/2 flex justify-center"
+          >
             <div className="relative w-[350px] max-w-[450px] h-[500px] overflow-hidden rounded-tl-[15%] rounded-br-[15%] shadow-2xl">
               <img
                 src={aboutImage}
@@ -62,10 +78,16 @@ const AboutUs = () => {
                 className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Side - Content */}
-          <div className="w-full lg:w-1/2 text-center lg:text-left">
+          <motion.div
+            ref={aboutRef}
+            initial={{ opacity: 0, x: 100 }} // Start faded out and slightly to the right
+            animate={aboutInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 100 }} // Fade in when in view
+            transition={{ duration: 1 }}
+            className="w-full lg:w-1/2 text-center lg:text-left"
+          >
             <h2 className="text-4xl font-extrabold text-brown">About Us</h2>
 
             <p className="mt-4 text-lg text-gray-700 leading-relaxed">
@@ -76,15 +98,15 @@ const AboutUs = () => {
             <p className="text-lg text-gray-700 leading-relaxed mt-4">
               Inspired by the legacy of The Maharaja Sayajirao's grandson, Sir Pratapsinghrao Gaekwad,
               who founded the Maharaja Sayajirao University and established the Sir Sayajirao Diamond Jubilee and Memorial Trust,
-              our mission is to continue serving the community with excellence. The trust caters to the educational and
-              organizational needs of the people of the former state of Baroda, and we aim to extend this legacy through our digital platform.
+              our mission is to continue serving the community with excellence.
             </p>
 
             <p className="text-lg text-gray-700 leading-relaxed mt-4">
               Our goal is to provide a seamless and user-friendly experience for managing auditorium bookings while ensuring
               efficiency and accessibility for all users.
             </p>
-          </div>
+          </motion.div>
+
         </div>
 
         {/* Counter Section */}
@@ -92,7 +114,7 @@ const AboutUs = () => {
           {[
             { icon: <FaBuilding size={40} className="text-brown" />, count: counters.totalAuditoriums, label: "Auditoriums" },
             { icon: <FaCalendarCheck size={40} className="text-green-600" />, count: counters.totalEvents, label: "Events Hosted" },
-            { icon: <FaUsers size={40} className="text-purple-600" />, count: counters.totalUsers, label: "Users Registered" },
+            { icon: <FaUsers size={40} className="text-purple-600" />, count: counters.totalUsers, label: "Community Members" },
             { icon: <FaCalendarCheck size={40} className="text-orange-600" />, count: counters.totalBookings, label: "Total Bookings" },
           ].map((item, index) => (
             <FadeInWhenVisible key={index} direction="up" delay={0.1 * index}>
