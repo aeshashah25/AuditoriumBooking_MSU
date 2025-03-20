@@ -68,9 +68,17 @@ const DashBoard = () => {
       <div className="flex flex-col flex-1 h-screen lg:ml-[250px]">
         {/* Top Navbar */}
         <div className="fixed top-0 left-0 lg:left-[250px] w-full lg:w-[calc(100%-250px)] bg-white shadow-md px-4 lg:px-6 py-4 flex justify-between items-center">
-          <button className="text-gray-900 lg:hidden flex items-center absolute left-4 top-1/2 transform -translate-y-1/2" onClick={() => setIsSidebarOpen(true)}>
+          {/* <button className="text-gray-900 lg:hidden flex items-center absolute left-4 top-1/2 transform -translate-y-1/2" onClick={() => setIsSidebarOpen(true)}>
             <FaBars size={26} />
+          </button> */}
+
+          <button
+            className="text-gray-900 lg:hidden flex items-center absolute left-4 top-1/2 transform -translate-y-1/2"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)} // Toggle state
+          >
+            {isSidebarOpen ? <FaTimes size={26} /> : <FaBars size={26} />}
           </button>
+
           <h1 className="text-lg md:text-xl font-semibold text-center flex-1 md:flex-none">
             Welcome, {user?.name || "User"}!
           </h1>

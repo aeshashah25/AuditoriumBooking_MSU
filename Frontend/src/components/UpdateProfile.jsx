@@ -47,7 +47,15 @@ const UpdateProfile = () => {
         formData.append("name", values.name);
         formData.append("email", values.email);
         formData.append("phone", values.phone);
-        if (imagePreview) formData.append("profilePic", imagePreview);
+
+        // Check if a new image is selected, otherwise send the existing URL
+        if (imagePreview) {
+          formData.append("profilePic", imagePreview); //New Image File
+        } else if (profilePicUrl) {
+          formData.append("profilePicUrl", profilePicUrl); // Send existing image URL as a fallback
+        }
+
+        //if (imagePreview) formData.append("profilePic", imagePreview);
 
         await axios.put("http://localhost:5000/api/user/update", formData, {
           headers: {
