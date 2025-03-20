@@ -32,35 +32,42 @@ function UserBooking() {
     }
   };
 
-  const handleCancel = async (bookingId) => {
-    if (!bookingId || isNaN(bookingId)) {
-      console.error("❌ Invalid bookingId:", bookingId);
+  const handleCancel = async (booking) => {
+    if (!booking?.id) {
+      console.error("❌ Invalid booking:", booking);
       return;
     }
   
-    try {
-      const response = await axios.post("http://localhost:5001/cancel-booking", { 
-        bookingId: Number(bookingId) // ✅ Ensure it's a number
-      });
+    const confirmCancel = window.confirm(
+      `Are you sure you want to cancel the booking for "${booking.event_name}"?`
+    );
   
-      // Update UI after cancellation
-      setBookings((prevBookings) =>
-        prevBookings.map((booking) =>
-          booking.id === bookingId ? { ...booking, refund_amount: response.data.refund_amount, booking_status: "canceled" } : booking
-        )
-      );
+    if (!confirmCancel) return; // Stop if user cancels
+  
+    try {
+      const response = await axios.get(`http://localhost:5001/cancel-booking/${booking.id}`);
+  
+      if (response.status === 200) {
+        alert("✅ Booking canceled successfully! An email has been sent to you.");
+  
+        setBookings((prevBookings) =>
+          prevBookings.map((b) =>
+            b.id === booking.id ? { ...b, booking_status: "cancelled" } : b
+          )
+        );
+      }
     } catch (error) {
       console.error("❌ Error canceling booking:", error);
+      alert("⚠️ Error canceling the booking. Please try again.");
     }
   };
-  
   
   const getTotalCost = (booking) => {
     let totalAmount = booking.total_amount || 0;
     let discountPercentage = booking.approved_discount || 0;
     let discountAmount = (totalAmount * discountPercentage) / 100;
     let finalAmount = totalAmount - discountAmount;
-  
+
     if (booking.booking_status === "approved") {
       return (
         <div className="text-sm">
@@ -94,26 +101,8 @@ function UserBooking() {
       );
     }
   };
-  
 
-  const filteredBookings = bookings.filter(
-    (booking) =>
-      booking.event_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (statusFilter === "" || booking.booking_status === statusFilter)
-  );
-
-  const calculateRefund = (firstDate, firstTime) => {
-    if (!firstDate || !firstTime) return 0;
-
-    const bookingDateTime = new Date(`${firstDate} ${firstTime}`);
-    const now = new Date();
-    const diffInHours = (bookingDateTime - now) / (1000 * 60 * 60);
-
-    if (diffInHours < 6) return 0;
-    if (diffInHours < 12) return 30;
-    if (diffInHours < 24) return 50;
-    return 100;
-  };
+ 
 
   const extractFirstDateTime = (dates) => {
     let minDate = null;
@@ -131,6 +120,12 @@ function UserBooking() {
 
     return { minDate, firstTime };
   };
+
+  const filteredBookings = bookings.filter(
+    (booking) =>
+      booking.event_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      (statusFilter === "" || booking.booking_status === statusFilter)
+  );
 
   return (
     <div className="min-h-screen bg-white flex justify-center items-center p-6">
@@ -177,36 +172,41 @@ function UserBooking() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredBookings.map((booking, index) => (
-                    <tr
-                      key={booking.id}
-                      className={`text-gray-700 border ${
-                        index % 2 === 0 ? "bg-gray-100" : "bg-white"
-                      } hover:bg-blue-100 transition`}
-                    >
-                      <td className="border p-3 font-medium">
-                        {booking.event_name}
-                      </td>
-                      <td className="border p-3">
-                        {booking.dates.map((d) => d.date || d.date_range).join(", ")}
-                      </td>
-                      <td className="border p-3">{getTotalCost(booking)}</td>
-                      <td className="border p-3">{booking.booking_status}</td>
-                      <td className="border p-3">
+                  {filteredBookings.map((booking, index) => {
+                    const { minDate, firstTime } = extractFirstDateTime(booking.dates);
+
+                    return (
+                      <tr
+                        key={booking.id}
+                        className={`text-gray-700 border ${
+                          index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                        } hover:bg-blue-100 transition`}
+                      >
+                        <td className="border p-3 font-medium">
+                          {booking.event_name}
+                        </td>
+                        <td className="border p-3">
+                          {booking.dates.map((d) => d.date || d.date_range).join(", ")}
+                        </td>
+                        <td className="border p-3">{getTotalCost(booking)}</td>
+                        <td className="border p-3">{booking.booking_status}</td>
+                        <td className="border p-3">
                         <button
-                          onClick={() => handleCancel(booking)}
-                          disabled={booking.booking_status !== "approved"}
-                          className={`w-full py-2 mt-2 rounded-md transition ${
-                            booking.booking_status !== "approved"
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-red-500 text-white hover:bg-red-700"
-                          }`}
-                        >
-                          Cancel
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+  onClick={() => handleCancel(booking)} // Pass the whole booking object
+  disabled={booking.booking_status === "rejected"}
+  className={`w-full py-2 mt-2 rounded-md transition ${
+    booking.booking_status !== "approved"
+      ? "bg-red-400 text-white cursor-not-allowed"
+      : "bg-gray-500 text-white hover:bg-red-700"
+  }`}
+>
+  Cancel
+</button>
+
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
