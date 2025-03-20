@@ -10,7 +10,7 @@ const MainPage = () => {
   const [tokenExpiration, setTokenExpiration] = useState(null);
   const [auditoriums, setAuditoriums] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  
+
   // Feedback states
   const [selectedAuditorium, setSelectedAuditorium] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -175,7 +175,7 @@ const MainPage = () => {
                       <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={handleUpdate}>
                         Update Profile
                       </li>
-                      <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => setDropdownOpen(false)}>
+                      <li className="px-4 py-2 hover:bg-gray-100 cursor-pointer" onClick={() => {setDropdownOpen(false); setShowFeedbackPopup(true);} }>
                         Feedback
                       </li>
                       <li className="px-4 py-2 text-red-500 hover:bg-gray-100 cursor-pointer" onClick={handleLogout}>

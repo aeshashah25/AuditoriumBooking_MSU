@@ -33,7 +33,6 @@ const App = () => {
         {/* Desktop Menu */}
         <div className="hidden lg:flex space-x-4">
           <Link to="/" className="text-black hover:text-brown border-b-2 border-transparent hover:border-brown-dark transition-all duration-300 px-2 py-1">Home</Link>
-          <Link to="/contact" className="text-black hover:text-brown border-b-2 border-transparent hover:border-brown-dark transition-all duration-300 px-2 py-1">Contact</Link>
           <Link to="/about" className="text-black hover:text-brown border-b-2 border-transparent hover:border-brown-dark transition-all duration-300 px-2 py-1">About</Link>
         </div>
 
