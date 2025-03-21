@@ -62,7 +62,7 @@ const AboutUs = () => {
   return (<>
     {/* Header */}
     <Navbar />
-    <div className=" mt-10 bg-gray-100 py-16 px-6 flex justify-center">
+    <div className="lg:mt-20 bg-gray-100 py-16 px-6 flex justify-center">
 
       <div className="container mx-auto flex flex-col gap-12">
 
