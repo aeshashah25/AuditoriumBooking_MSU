@@ -3,8 +3,6 @@ import { useState, useEffect } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import axios from "axios";
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
 import aboutImage from "../assets/about_image.jpg";
 
 const FadeInWhenVisible = ({ children, direction = "up", delay = 0 }) => {
@@ -60,8 +58,7 @@ const AboutUs = () => {
   }, []);
 
   return (<>
-    {/* Header */}
-    <Navbar />
+
     <div className="lg:mt-20 bg-gray-100 py-16 px-6 flex justify-center">
 
       <div className="container mx-auto flex flex-col gap-12">
@@ -135,8 +132,6 @@ const AboutUs = () => {
       </div>
     </div>
 
-    {/* Footer */}
-    <Footer />
   </>
   );
 };

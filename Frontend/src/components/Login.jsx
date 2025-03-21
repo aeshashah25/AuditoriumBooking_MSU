@@ -328,9 +328,7 @@ const Login = () => {
 
   return (
     <>
-      {/* Header */}
-      <Navbar />
-
+     
       <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-6">
         {userData ? (
           <div className="p-6 bg-white rounded-lg shadow-md text-center">
@@ -584,8 +582,6 @@ const Login = () => {
         )}
       </div>
 
-      {/* Footer */}
-      <Footer />
     </>
   );
 
