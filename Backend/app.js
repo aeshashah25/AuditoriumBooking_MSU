@@ -342,7 +342,7 @@ app.post("/api/send-reset-otp", async (req, res) => {
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Password Reset OTP",
-      text: `Your OTP for password reset is: ${otp}. It is valid for 3 minutes.`,
+      text: `Your OTP for password reset is:${otp}. It is valid for 3 minutes.`,
     });
 
     res.status(200).json({ message: "OTP sent to email" });
