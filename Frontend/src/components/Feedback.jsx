@@ -18,7 +18,7 @@ const Feedback = () => {
   }, []);
 
   return (
-    <div className="py-12 px-6 flex bg-white justify-center ">
+    <div className="lg:mt-20 py-12 px-6 flex bg-white justify-center ">
       <div className="w-full bg-white max-w-6xl">
         <h2 className="text-4xl bg-white font-extrabold text-center text-brown mb-10">
           What Our Users Say

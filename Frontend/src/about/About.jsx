@@ -14,12 +14,12 @@ const FadeInWhenVisible = ({ children, direction = "up", delay = 0 }) => {
       inView
         ? { opacity: 1, y: 0, x: 0 }
         : direction === "up"
-        ? { opacity: 0, y: 50 }
-        : direction === "down"
-        ? { opacity: 0, y: -50 }
-        : direction === "left"
-        ? { opacity: 0, x: -50 }
-        : { opacity: 0, x: 50 }
+          ? { opacity: 0, y: 50 }
+          : direction === "down"
+            ? { opacity: 0, y: -50 }
+            : direction === "left"
+              ? { opacity: 0, x: -50 }
+              : { opacity: 0, x: 50 }
     );
   }, [controls, inView, direction]);
 
@@ -57,8 +57,10 @@ const AboutUs = () => {
       .catch((error) => console.error("Error fetching data:", error));
   }, []);
 
-  return (
-    <div className="bg-gray-100 py-16 px-6 flex justify-center">
+  return (<>
+
+    <div className="lg:mt-20 bg-gray-100 py-16 px-6 flex justify-center">
+
       <div className="container mx-auto flex flex-col gap-12">
 
         {/* Image & Content Section */}
@@ -129,6 +131,8 @@ const AboutUs = () => {
 
       </div>
     </div>
+
+  </>
   );
 };
 

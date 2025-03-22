@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import Navbar from "../components/Navbar";
 import Banner from "../components/Banner";
-import Footer from "../components/Footer";
 import Feedback from "../components/Feedback";
 import About from "../about/About";
 
@@ -79,10 +78,10 @@ function Home() {
         <Feedback />
       </ScrollAnimation>
 
-      {/* Footer Sliding from the Bottom on Scroll */}
+      {/* Footer Sliding from the Bottom on Scroll
       <ScrollAnimation variants={slideBottom}>
         <Footer />
-      </ScrollAnimation>
+      </ScrollAnimation> */}
     </div>
   );
 }
