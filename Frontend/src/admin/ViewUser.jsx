@@ -37,9 +37,9 @@ function ViewUser() {
 
     return (
         <div className="min-h-screen bg-gray-100 py-6 px-4 sm:px-6 lg:px-8 lg:ml-3">
-            <div className="bg-white p-6 shadow-md w-full max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">View Users</h2>
+            <div className="bg-white p-6 shadow-md w-full max-w-6xl mx-auto overflow-hidden rounded-lg">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold mb-2 sm:mb-0">View Users</h2>
                     <input
                         type="text"
                         placeholder="Search by username"
@@ -49,11 +49,11 @@ function ViewUser() {
                     />
                 </div>
 
-                {/* Table */}
+                {/* Responsive Table */}
                 <div className="overflow-x-auto">
                     <table className="w-full border-collapse border border-gray-300">
                         <thead>
-                            <tr className="bg-gray-200">
+                            <tr className="bg-gray-200 text-sm sm:text-base">
                                 <th className="border p-2">SR NO</th>
                                 <th className="border p-2">Name</th>
                                 <th className="border p-2">Email</th>
@@ -65,26 +65,29 @@ function ViewUser() {
                         <tbody>
                             {filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="8" className="text-center p-4 text-gray-500">
+                                    <td colSpan="6" className="text-center p-4 text-gray-500">
                                         No users found.
                                     </td>
                                 </tr>
                             ) : (
                                 filteredUsers.map((user, index) => (
-                                    <tr key={user.id} className="text-center border-b">
+                                    <tr key={user.id} className="text-center border-b text-sm sm:text-base">
                                         <td className="border p-2">{index + 1}</td>
                                         <td className="border p-2">{user.name}</td>
-                                        <td className="border p-2">{user.email}</td>
+                                        <td className="border p-2 break-all">{user.email}</td>
                                         <td className="border p-2">{user.phone}</td>
-                                        <td className={`border p-2 font-semibold ${user.status === "active" ? "text-green-600" : "text-red-600"}`}>
+                                        <td
+                                            className={`border p-2 font-semibold ${user.status === "active" ? "text-green-600" : "text-red-600"
+                                                }`}
+                                        >
                                             {user.status}
                                         </td>
                                         <td className="border p-2 font-semibold">
                                             <button
                                                 onClick={() => handleToggleStatus(user.id, user.status)}
-                                                className={`px-3 py-1 rounded-md transition ${user.status === "active"
-                                                    ? "bg-red-600 text-white hover:bg-red-500"
-                                                    : "bg-green-600 text-white hover:bg-green-500"
+                                                className={`px-3 py-1 rounded-md transition text-xs sm:text-sm ${user.status === "active"
+                                                        ? "bg-red-600 text-white hover:bg-red-500"
+                                                        : "bg-green-600 text-white hover:bg-green-500"
                                                     }`}
                                             >
                                                 {user.status === "active" ? "Deactivate" : "Activate"}

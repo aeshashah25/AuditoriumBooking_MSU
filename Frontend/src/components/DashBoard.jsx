@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Routes, Route, Link } from "react-router-dom";
-import { FaHome, FaEye, FaUser, FaSignOutAlt, FaClipboardList, FaBars, FaTimes } from "react-icons/fa";
+import { FaHome, FaEye, FaUser, FaSignOutAlt, FaClipboardList, FaBars, FaTimes, FaTachometerAlt } from "react-icons/fa";
 import { MdPayments, MdEvent } from "react-icons/md";
 import { BsFillBookmarkCheckFill } from "react-icons/bs";
 import DashboardContent from "./DashboardContent";
@@ -54,6 +54,9 @@ const DashBoard = () => {
           </button>
         </div>
         <nav className="min-w-[250px] max-w-[320px] flex flex-col mt-4 space-y-4 px-4">
+          <Link to="/DashBoard" className="flex items-center px-4 py-2 rounded-lg hover:bg-gray-800 transition">
+            <FaTachometerAlt className="mr-2" /> Back to Dashboard
+          </Link>
           <Link to="/DashBoard/create-auditorium" className="flex items-center px-4 py-2 rounded-lg hover:bg-gray-800 transition"><FaHome className="mr-2" /> Add Auditorium</Link>
           <Link to="/DashBoard/view-auditoriums" className="flex items-center px-4 py-2 rounded-lg hover:bg-gray-800 transition"><FaEye className="mr-2" /> View Auditorium</Link>
           <Link to="/DashBoard/view-user" className="flex items-center px-4 py-2 rounded-lg hover:bg-gray-800 transition"><FaUser className="mr-2" /> View User</Link>

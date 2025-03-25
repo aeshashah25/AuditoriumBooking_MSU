@@ -126,148 +126,73 @@ const CreateAuditoriums = () => {
 
   return (
 
-    <div className="max-w-5xl mx-auto bg-white p-8 shadow-md mt-6 px-10">
-      <h2 className="text-3xl font-bold  text-black-700 mb-6">
+    <div className="max-w-5xl mx-auto bg-white p-6 sm:p-8 shadow-md mt-6 px-6 sm:px-10 rounded-lg">
+      <h2 className="text-2xl sm:text-3xl font-bold text-black-700 mb-6 text-center">
         {id ? "Edit Auditorium" : "Add Auditorium"}
       </h2>
 
-      <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-8">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Section - Auditorium Details */}
         <div className="space-y-4">
-          <input type="text" name="name" placeholder="Auditorium Name" value={formData.name} onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 " required />
+          <input type="text" name="name" placeholder="Auditorium Name" value={formData.name} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
+          <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
+          <input type="number" name="capacity" placeholder="Capacity" value={formData.capacity} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
 
-          <textarea name="description" placeholder="Description" value={formData.description} onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
-
-          <input type="number" name="capacity" placeholder="Capacity" value={formData.capacity} onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
-
-          {/* Time Inputs */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-gray-600 mb-1">Opening Time</label>
-              <input
-                type="time"
-                name="start_time"
-                value={formData.start_time}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400"
-                required
-              />
+              <input type="time" name="start_time" value={formData.start_time} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
             </div>
-            {/* <input type="time" name="end_time" value={formData.end_time} onChange={handleChange}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required /> */}
             <div>
               <label className="block text-gray-600 mb-1">Closing Time</label>
-              <input
-                type="time"
-                name="end_time"
-                value={formData.end_time}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400"
-                required
-              />
+              <input type="time" name="end_time" value={formData.end_time} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
             </div>
           </div>
 
-          <input type="text" name="location" placeholder="Location" value={formData.location} onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
-
-          <input type="number" name="price_per_hour" placeholder="Price Per Hour" value={formData.price_per_hour} onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
+          <input type="text" name="location" placeholder="Location" value={formData.location} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
+          <input type="number" name="price_per_hour" placeholder="Price Per Hour" value={formData.price_per_hour} onChange={handleChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required />
         </div>
 
-        {/* Right Section - Time, Amenities, and Image Upload */}
+        {/* Right Section - Image Upload and Amenities */}
         <div className="space-y-4">
+          <input type="file" multiple accept="image/*" onChange={handleImageChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400" required={!id} />
 
-          {/* Image Upload */}
-          <input type="file" multiple accept="image/*" onChange={handleImageChange}
-            className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-blue-400 " required={!id} />
-
-          {/* Show Existing Images in Edit Mode */}
           {existingImages.length > 0 && (
             <div className="flex flex-wrap gap-4 mb-4">
               {existingImages.map((img, index) => (
                 <div key={index} className="relative">
-                  <img
-                    src={`data:${img.mimetype};base64,${img.data}`}
-                    alt={`Uploaded ${index}`}
-                    className="w-24 h-24 rounded-lg shadow-md object-cover"
-                    onError={(e) => e.target.src = "/fallback-image.png"} // Fallback image handling
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveExistingImage(index)}
-                    className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                  >
-                    ✖
-                  </button>
+                  <img src={`data:${img.mimetype};base64,${img.data}`} alt={`Uploaded ${index}`} className="w-24 h-24 rounded-lg shadow-md object-cover" onError={(e) => (e.target.src = "/fallback-image.png")} />
+                  <button type="button" onClick={() => handleRemoveExistingImage(index)} className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">✖</button>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Add Amenities */}
           <div className="p-4 bg-gray-100 rounded-lg shadow-md">
             <h3 className="font-semibold text-lg text-gray-700 mb-3">Add Amenities</h3>
-
-            <div className="grid grid-cols-[2fr_2fr_auto] gap-5 items-center">
-              {/* Amenity Name Input */}
-              <input
-                type="text"
-                name="name"
-                value={newAmenity.name}
-                placeholder="Amenity Name"
-                onChange={handleAmenityChange}
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-green-400"
-              />
-
-              {/* Amenity Cost Input */}
-              <input
-                type="number"
-                name="cost"
-                value={newAmenity.cost}
-                placeholder="Amenity Cost"
-                onChange={handleAmenityChange}
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-green-400"
-              />
-
-              {/* Add Button with "+" Icon */}
-              <button
-                type="button"
-                onClick={addAmenity}
-                className="p-2 w-10 h-10 flex items-center justify-center border text-green-500 rounded-full bg-white transition duration-300 hover:bg-green-500 hover:text-white"
-              >
+            <div className="grid grid-cols-1 sm:grid-cols-[2fr_2fr_auto] gap-5 items-center">
+              <input type="text" name="name" value={newAmenity.name} placeholder="Amenity Name" onChange={handleAmenityChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-green-400" />
+              <input type="number" name="cost" value={newAmenity.cost} placeholder="Amenity Cost" onChange={handleAmenityChange} className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-1 focus:ring-green-400" />
+              <button type="button" onClick={addAmenity} className="p-2 w-10 h-10 flex items-center justify-center border text-green-500 rounded-full bg-white transition duration-300 hover:bg-green-500 hover:text-white">
                 <span className="text-xl font-bold">+</span>
               </button>
             </div>
-
           </div>
 
-          {/* Amenities List */}
           {amenities.length > 0 && (
             <ul className="p-4 bg-gray-50 rounded-lg shadow-md">
               {amenities.map((amenity, index) => (
                 <li key={index} className="flex justify-between items-center p-2 border-b last:border-none">
                   <span className="text-gray-700">{amenity.name} - ₹{amenity.cost}</span>
-                  <button
-                    onClick={() => removeAmenity(index)}
-                    className="text-red-500 hover:text-red-700 transition"
-                  >
-                    ✖
-                  </button>
+                  <button onClick={() => removeAmenity(index)} className="text-red-500 hover:text-red-700 transition">✖</button>
                 </li>
               ))}
             </ul>
-
           )}
-
         </div>
 
-        {/* Submit Button - Full Width */}
-        <div className="col-span-2">
+        {/* Submit Button */}
+        <div className="col-span-1 md:col-span-2">
           <button type="submit" className="w-full bg-gray-600 text-white py-3 rounded-lg text-lg hover:bg-gray-500 transition">
             {id ? "Update Auditorium" : "Add Auditorium"}
           </button>
