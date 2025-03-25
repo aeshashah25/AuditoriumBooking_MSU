@@ -30,7 +30,6 @@ const Login = () => {
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [otpExpiration, setOtpExpiration] = useState(null);
 
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -72,7 +71,10 @@ const Login = () => {
   // Function to check email/phone existence
   const checkExistence = async (email, phone) => {
     try {
-      const response = await axios.post("http://localhost:5000/api/check-existence", { email, phone });
+      const response = await axios.post(
+        "http://localhost:5000/api/check-existence",
+        { email, phone }
+      );
       return response.data; // { emailAvailable: true/false, phoneAvailable: true/false }
     } catch (error) {
       console.error("Error checking existence:", error);
@@ -83,14 +85,18 @@ const Login = () => {
   const emailValidation = (isSignup) => {
     return Yup.string()
       .email("Invalid email address")
-      .test("validDomain", "Email must be from allowed providers (e.g., Gmail, Yahoo, Outlook)", (value) => {
-        if (!value) return true; // Allow empty (required check later)
-        const domainMatch = value.match(/@([\w-]+)\.(\w+)$/);
-        if (!domainMatch) return false; // Invalid format
+      .test(
+        "validDomain",
+        "Email must be from allowed providers (e.g., Gmail, Yahoo, Outlook)",
+        (value) => {
+          if (!value) return true; // Allow empty (required check later)
+          const domainMatch = value.match(/@([\w-]+)\.(\w+)$/);
+          if (!domainMatch) return false; // Invalid format
 
-        const [, domain, tld] = domainMatch;
-        return allowedDomains.includes(domain) && allowedTLDs.includes(tld);
-      })
+          const [, domain, tld] = domainMatch;
+          return allowedDomains.includes(domain) && allowedTLDs.includes(tld);
+        }
+      )
       .test("checkEmailExists", async function (value) {
         if (!value) return true; // Skip if empty (required check later)
         if (!isSignup) return true; // ✅ Skip checking existence during login
@@ -105,7 +111,6 @@ const Login = () => {
       .required("Email is required");
   };
 
-
   // Phone validation
   const phoneValidation = Yup.string()
     .matches(/^\d{10}$/, "Phone number must be exactly 10 digits")
@@ -114,14 +119,17 @@ const Login = () => {
 
       const response = await checkExistence(null, value);
       if (!response.phoneAvailable) {
-        return this.createError({ message: "Phone number is already registered" });
+        return this.createError({
+          message: "Phone number is already registered",
+        });
       }
       return true;
     })
     .required("Phone number is required");
 
   // Password validation (5-10 chars, upper/lowercase, number, special char)
-  const passwordValidationRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@_$!%*?&]).{5,10}$/;
+  const passwordValidationRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@_$!%*?&]).{5,10}$/;
   const passwordValidation = Yup.string()
     .matches(
       passwordValidationRegex,
@@ -130,20 +138,27 @@ const Login = () => {
     .required("Password is required");
 
   // Signup Schema
-  const signupValidationSchema = Yup.object().shape({
-    name: Yup.string()
-      .matches(/^[A-Za-z\s]+$/, "Name cannot contain numbers or special characters")
-      .required("Name is required"),
-    email: emailValidation(true), // ✅ Pass 'true' for signup
-    password: passwordValidation,
-    phone: phoneValidation,
-  }).defined();
+  const signupValidationSchema = Yup.object()
+    .shape({
+      name: Yup.string()
+        .matches(
+          /^[A-Za-z\s]+$/,
+          "Name cannot contain numbers or special characters"
+        )
+        .required("Name is required"),
+      email: emailValidation(true), // ✅ Pass 'true' for signup
+      password: passwordValidation,
+      phone: phoneValidation,
+    })
+    .defined();
 
   // Login Schema
-  const loginValidationSchema = Yup.object().shape({
-    email: emailValidation(false), // ✅ Pass 'false' for login
-    password: passwordValidation,
-  }).defined();
+  const loginValidationSchema = Yup.object()
+    .shape({
+      email: emailValidation(false), // ✅ Pass 'false' for login
+      password: passwordValidation,
+    })
+    .defined();
 
   const formik = useFormik({
     initialValues: {
@@ -152,33 +167,38 @@ const Login = () => {
       password: "",
       phone: "",
       confirmPassword: "", // Add this to avoid errors
-
     },
     validationSchema: isLogin ? loginValidationSchema : signupValidationSchema,
     onSubmit: async (values) => {
       if (!isLogin && !otpSent) {
         try {
-          const response = await axios.post("http://localhost:5000/api/signup", values);
+          const response = await axios.post(
+            "http://localhost:5000/api/signup",
+            values
+          );
           alert(response.data.message);
-          setSignupEmail(values.email);  // Store email for OTP verification
-          setOtpSent(true);  // Show OTP input field
-          setError("");  // Clear previous errors
+          setSignupEmail(values.email); // Store email for OTP verification
+          setOtpSent(true); // Show OTP input field
+          setError(""); // Clear previous errors
         } catch (err) {
           const errorMsg = err.response?.data?.message || "Signup failed.";
-          setError(errorMsg);  // Display error message on screen
+          setError(errorMsg); // Display error message on screen
           if (errorMsg === "OTP already sent. Please verify it.") {
-            setOtpSent(true);  // Ensure OTP field appears automatically
+            setOtpSent(true); // Ensure OTP field appears automatically
           }
         }
       } else if (!isLogin && otpSent) {
         try {
-          const response = await axios.post("http://localhost:5000/api/verify-otp", {
-            email: signupEmail,
-            otp
-          });
+          const response = await axios.post(
+            "http://localhost:5000/api/verify-otp",
+            {
+              email: signupEmail,
+              otp,
+            }
+          );
 
           alert(response.data.message);
-          setIsLogin(true);  // Switch to login
+          setIsLogin(true); // Switch to login
           setOtpSent(false);
           setOtp("");
           setError("");
@@ -187,24 +207,25 @@ const Login = () => {
         }
       } else {
         try {
-          const response = await axios.post("http://localhost:5000/api/login", values);
+          const response = await axios.post(
+            "http://localhost:5000/api/login",
+            values
+          );
           alert(response.data.message);
           if (response.data.token) {
             localStorage.setItem("jwt_token", response.data.token);
             localStorage.setItem("user_role", response.data.role);
             localStorage.setItem("user_id", response.data.userId);
-            navigate(response.data.role === "admin" ? "/DashBoard" : "/MainPage");
+            navigate(
+              response.data.role === "admin" ? "/DashBoard" : "/MainPage"
+            );
           }
         } catch (err) {
           setError(err.response?.data?.message || "An error occurred.");
         }
       }
     },
-
-
   });
-
-
 
   const togglePasswordVisibility = (field) => {
     if (field === "password") {
@@ -227,13 +248,17 @@ const Login = () => {
     try {
       await emailSchema.validate({ email });
 
-      const response = await axios.post("http://localhost:5000/api/send-reset-otp", { email });
+      const response = await axios.post(
+        "http://localhost:5000/api/send-reset-otp",
+        { email }
+      );
 
       alert(response.data.message);
       setOtpSent(true);
       setOtpExpiration(Date.now() + 3 * 60 * 1000);
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || "Failed to send OTP";
+      const errorMessage =
+        error.response?.data?.message || error.message || "Failed to send OTP";
 
       if (errorMessage.includes("OTP already sent")) {
         // If OTP is already sent, directly go to the OTP input field
@@ -243,7 +268,6 @@ const Login = () => {
       }
     }
   };
-
 
   const verifyOtp = async (e) => {
     e.preventDefault();
@@ -255,11 +279,16 @@ const Login = () => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/verify-reset-otp", { email, otp });
+      const response = await axios.post(
+        "http://localhost:5000/api/verify-reset-otp",
+        { email, otp }
+      );
       alert(response.data.message);
       setOtpVerified(true);
     } catch (error) {
-      setOtpError(error.response?.data?.message || error.message || "Invalid OTP");
+      setOtpError(
+        error.response?.data?.message || error.message || "Invalid OTP"
+      );
     }
   };
 
@@ -275,16 +304,23 @@ const Login = () => {
     try {
       await passwordSchema.validate({ newPassword, confirmPassword });
 
-      const response = await axios.post("http://localhost:5000/api/reset-password", {
-        email,
-        newPassword,
-      });
+      const response = await axios.post(
+        "http://localhost:5000/api/reset-password",
+        {
+          email,
+          newPassword,
+        }
+      );
 
       alert(response.data.message);
       setIsLogin(true);
       setForgotPassword(false);
     } catch (error) {
-      setChangePasswordError(error.response?.data?.message || error.message || "Password reset failed");
+      setChangePasswordError(
+        error.response?.data?.message ||
+          error.message ||
+          "Password reset failed"
+      );
     }
   };
 
@@ -298,9 +334,12 @@ const Login = () => {
         test: async (value) => {
           if (!value) return false;
           try {
-            const response = await axios.post("http://localhost:5000/api/check-existence", {
-              email: value,
-            });
+            const response = await axios.post(
+              "http://localhost:5000/api/check-existence",
+              {
+                email: value,
+              }
+            );
             return !response.data.emailAvailable;
           } catch (error) {
             return false;
@@ -341,6 +380,29 @@ const Login = () => {
           <div className="lg:mt-28 w-full max-w-md p-8 bg-white rounded-lg shadow-md">
             <h2 className="text-2xl font-bold text-center mb-6">{isLogin ? "Login" : "Sign Up"}</h2>
             {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{error}</div>}
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-6">
+      {userData ? (
+        <div className="p-6 bg-white rounded-lg shadow-md text-center">
+          <h2 className="text-2xl font-semibold mb-4">
+            Welcome, {userData.name}
+          </h2>
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Logout
+          </button>
+        </div>
+      ) : (
+        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold text-center mb-6">
+            {isLogin ? "Login" : "Sign Up"}
+          </h2>
+          {error && (
+            <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
+              {error}
+            </div>
+          )}
 
             <form onSubmit={formik.handleSubmit}>
               {!isLogin && (
@@ -438,153 +500,154 @@ const Login = () => {
               )}
 
 
-              <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                {isLogin ? "Login" : "Sign Up"}
-              </button>
-            </form>
+            <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+              {isLogin ? "Login" : "Sign Up"}
+            </button>
+          </form>
 
-            {isLogin && (
-              <div className="text-center mt-4">
-                <span onClick={() => setForgotPassword(true)} className="text-brown cursor-pointer">
-                  Forgot Password?
-                </span>
-              </div>
-            )}
+          {isLogin && (
+            <div className="text-center mt-4">
+              <span onClick={() => setForgotPassword(true)} className="text-brown cursor-pointer">
+                Forgot Password?
+              </span>
+            </div>
+          )}
 
             {forgotPassword && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                   <h2 className="text-xl font-semibold mb-4">Reset Password</h2>
 
-                  {changePasswordError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{changePasswordError}</div>}
+                {changePasswordError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{changePasswordError}</div>}
 
-                  {/* Step 1: Email Input */}
-                  {!otpSent && (
-                    <form onSubmit={handleEmailSubmit} className="space-y-4">
-                      <div className="mb-4">
-                        <label className="block text-gray-700">Email</label>
+                {/* Step 1: Email Input */}
+                {!otpSent && (
+                  <form onSubmit={handleEmailSubmit} className="space-y-4">
+                    <div className="mb-4">
+                      <label className="block text-gray-700">Email</label>
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="Enter your email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full p-2 border rounded bg-white"
+                      />
+                      {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
+                    </div>
+
+                    <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                      Send OTP
+                    </button>
+                  </form>
+                )}
+
+                {/* Step 2: OTP Input */}
+                {otpSent && !otpVerified && (
+                  <form onSubmit={verifyOtp} className="space-y-4">
+                    <div className="mb-4">
+                      <label className="block text-gray-700">Enter OTP</label>
+                      <input
+                        type="text"
+                        name="otp"
+                        placeholder="Enter OTP"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        className="w-full p-2 border rounded bg-white"
+                      />
+                      {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
+                    </div>
+
+                    <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                      Verify OTP
+                    </button>
+
+
+                  </form>
+                )}
+
+                {/* Step 3: New Password Input */}
+                {otpVerified && (
+                  <form onSubmit={handleChangePassword} className="space-y-4">
+                    <div className="mb-4">
+                      <label className="block text-gray-700">New Password</label>
+                      <div className="relative">
                         <input
-                          type="email"
-                          name="email"
-                          placeholder="Enter your email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          type={showNewPassword ? "text" : "password"}
+                          name="newPassword"
+                          placeholder="Enter new password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
                           className="w-full p-2 border rounded bg-white"
                         />
-                        {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-2 top-2 text-gray-500"
+                        >
+                          {showNewPassword ? "Hide" : "Show"}
+                        </button>
                       </div>
+                      {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
+                    </div>
 
-                      <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                        Send OTP
-                      </button>
-                    </form>
-                  )}
-
-                  {/* Step 2: OTP Input */}
-                  {otpSent && !otpVerified && (
-                    <form onSubmit={verifyOtp} className="space-y-4">
-                      <div className="mb-4">
-                        <label className="block text-gray-700">Enter OTP</label>
+                    <div className="mb-4">
+                      <label className="block text-gray-700">Confirm New Password</label>
+                      <div className="relative">
                         <input
-                          type="text"
-                          name="otp"
-                          placeholder="Enter OTP"
-                          value={otp}
-                          onChange={(e) => setOtp(e.target.value)}
+                          type={showConfirmPassword ? "text" : "password"}
+                          name="confirmPassword"
+                          placeholder="Confirm new password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
                           className="w-full p-2 border rounded bg-white"
                         />
-                        {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-2 top-2 text-gray-500"
+                        >
+                          {showConfirmPassword ? "Hide" : "Show"}
+                        </button>
                       </div>
+                      {confirmPasswordError && <p className="text-red-500 text-sm">{confirmPasswordError}</p>}
+                    </div>
 
-                      <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                        Verify OTP
-                      </button>
+                    <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                      Change Password
+                    </button>
+                  </form>
+                )}
 
-
-                    </form>
-                  )}
-
-                  {/* Step 3: New Password Input */}
-                  {otpVerified && (
-                    <form onSubmit={handleChangePassword} className="space-y-4">
-                      <div className="mb-4">
-                        <label className="block text-gray-700">New Password</label>
-                        <div className="relative">
-                          <input
-                            type={showNewPassword ? "text" : "password"}
-                            name="newPassword"
-                            placeholder="Enter new password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full p-2 border rounded bg-white"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-2 top-2 text-gray-500"
-                          >
-                            {showNewPassword ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                        {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-                      </div>
-
-                      <div className="mb-4">
-                        <label className="block text-gray-700">Confirm New Password</label>
-                        <div className="relative">
-                          <input
-                            type={showConfirmPassword ? "text" : "password"}
-                            name="confirmPassword"
-                            placeholder="Confirm new password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full p-2 border rounded bg-white"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-2 top-2 text-gray-500"
-                          >
-                            {showConfirmPassword ? "Hide" : "Show"}
-                          </button>
-                        </div>
-                        {confirmPasswordError && <p className="text-red-500 text-sm">{confirmPasswordError}</p>}
-                      </div>
-
-                      <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                        Change Password
-                      </button>
-                    </form>
-                  )}
-
-                  <button
-                    onClick={() => setForgotPassword(false)}
-                    className="mt-4 w-full bg-gray-300 text-gray-700 p-2 rounded"
-                  >
-                    Close
-                  </button>
-                </div>
+                <button
+                  onClick={() => setForgotPassword(false)}
+                  className="mt-4 w-full bg-gray-300 text-gray-700 p-2 rounded"
+                >
+                  Close
+                </button>
               </div>
+            </div>
+          )}
+
+
+
+          <p className="mt-4 text-center">
+            {isLogin ? (
+              <span onClick={() => setIsLogin(false)} className="text-black cursor-pointer">
+                Don't have an account? <span className="text-brown-light">Sign Up</span>
+              </span>
+            ) : (
+              <span onClick={() => setIsLogin(true)} className="text-black cursor-pointer">
+                Already have an account? <span className="text-brown-light">Login</span>
+              </span>
             )}
-
-            <p className="mt-4 text-center">
-              {isLogin ? (
-                <span onClick={() => setIsLogin(false)} className="text-black cursor-pointer">
-                  Don't have an account? <span className="text-brown-light">Sign Up</span>
-                </span>
-              ) : (
-                <span onClick={() => setIsLogin(true)} className="text-black cursor-pointer">
-                  Already have an account? <span className="text-brown-light">Login</span>
-                </span>
-              )}
-            </p>
-          </div>
-        )}
-      </div>
-
-    </>
+          </p>
+        </div>
+      )}
+    </div>
+    
   );
-
+  
 
 }
 export default Login;
