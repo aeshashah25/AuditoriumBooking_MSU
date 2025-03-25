@@ -43,7 +43,7 @@ const dbConfig = {
   password: process.env.DB_PASSWORD,
   server: process.env.DB_SERVER,
   database: process.env.DB_DATABASE,
-  options: { 
+  options: {
     encrypt: true, // For Azure use true, for local use false
     trustServerCertificate: true // Change to false for production if using a valid certificate
   },
@@ -116,7 +116,7 @@ app.post("/api/verify-otp", async (req, res) => {
 
     const { name, password, phone } = otpStore[email];
     const hashedPassword = await bcrypt.hash(password, 10);
-    
+
     const pool = await sql.connect(dbConfig);
     await pool
       .request()
@@ -125,15 +125,15 @@ app.post("/api/verify-otp", async (req, res) => {
       .input("password", sql.NVarChar, hashedPassword)
       .input("phone", sql.NVarChar, phone)
       .query("INSERT INTO UsersDetails (name, email, password, phone) VALUES (@name, @email, @password, @phone)");
-    
+
     delete otpStore[email]; // Remove OTP after successful verification
-    
+
     res.status(201).json({ message: "User registered successfully." });
   } catch (err) {
     res.status(500).json({ message: "Error: " + err.message });
   }
 
-  
+
 });
 
 app.post("/api/check-existence", async (req, res) => {
@@ -141,7 +141,7 @@ app.post("/api/check-existence", async (req, res) => {
 
   try {
     const pool = await sql.connect(dbConfig);
-    
+
     let query = "SELECT email, phone FROM UsersDetails WHERE ";
     const inputs = [];
 
@@ -149,7 +149,7 @@ app.post("/api/check-existence", async (req, res) => {
       query += "email = @email";
       inputs.push({ name: "email", type: sql.NVarChar, value: email });
     }
-    
+
     if (phone) {
       if (email) query += " OR "; // Add OR if both email and phone are provided
       query += "phone = @phone";
@@ -166,14 +166,14 @@ app.post("/api/check-existence", async (req, res) => {
     const phoneExists = result.recordset.some((row) => row.phone === phone);
 
     res.json({ emailAvailable: !emailExists, phoneAvailable: !phoneExists });
-    
+
   } catch (error) {
     res.status(500).json({ message: "Database error", error: error.message });
   }
 });
 
- // Login Route with Role-Based Authentication
- app.post("/api/login", async (req, res) => {
+// Login Route with Role-Based Authentication
+app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const pool = await sql.connect(dbConfig);
@@ -203,7 +203,7 @@ app.post("/api/check-existence", async (req, res) => {
     const token = jwt.sign(
       { id: user.id, name: user.name, email: user.email, role },
       process.env.JWT_SECRET,
-      { expiresIn:  process.env.JWT_EXPIRY }
+      { expiresIn: process.env.JWT_EXPIRY }
     );
 
     res.status(200).json({ message: "Login successful", token, role, userId: user.id });

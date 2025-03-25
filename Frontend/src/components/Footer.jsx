@@ -8,7 +8,7 @@ function Footer() {
             <hr />
             <footer className="footer bg-white  text-black-content p-10">
                 <aside>
-                    <img src="logo.png" alt="logo" className="dark:invert britness- w-30 h-30" />{"  "}
+                    <img src="/logo.png" alt="logo" className="dark:invert britness- w-30 h-30" />{"  "}
                     <p className="text-gray-700 dark:text-white">
                         <span className="text-xl font-semibold">The M. S. University of Baroda, Pratapgunj,</span><br />
                         Vadodara, Gujarat-390002 <br />

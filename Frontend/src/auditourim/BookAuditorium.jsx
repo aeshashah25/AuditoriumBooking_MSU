@@ -3,6 +3,7 @@ import { useLocation, useParams } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useNavigate } from "react-router-dom";
+import FixedLayout from "../components/FixedLayout";
 
 function BookAuditorium() {
   const navigate = useNavigate();
@@ -222,140 +223,145 @@ function BookAuditorium() {
 
 
   return (
-    <div className="p-8 bg-white shadow-lg rounded-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-8 mt-12">
-      {/* Left Section: Date Selection */}
-      <div className="w-full md:w-2/3 bg-gray-50 p-6 rounded-lg shadow-md">
-        <label className="block text-gray-700 font-semibold mb-1">Select Booking Type:</label>
-        <select
-          onChange={(e) => setIsDateRangeMode(e.target.value === 'range')}
-          className="w-full p-3 border bg-gray-50 text-gray-800 font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
-        >
-          <option value="multiple">Multiple time slots per date</option>
-          <option value="range">Same time slots for date range</option>
-        </select>
+    <>
+      <div className="bg-gray-100">
+        <FixedLayout>
+          <div className="p-8 bg-white shadow-lg rounded-lg max-w-4xl mx-auto flex flex-col md:flex-row gap-8 mb-10 border border-gray-100">
+            {/* Left Section: Date Selection */}
+            <div className="w-full md:w-2/3 bg-gray-50 p-6 rounded-lg shadow-md">
+              <label className="block text-gray-700 font-semibold mb-1">Select Booking Type:</label>
+              <select
+                onChange={(e) => setIsDateRangeMode(e.target.value === 'range')}
+                className="w-full p-3 border bg-gray-50 text-gray-800 font-semibold rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+              >
+                <option value="multiple">Multiple time slots per date</option>
+                <option value="range">Same time slots for date range</option>
+              </select>
 
-        {/* Dynamic Note Display */}
-        {isDateRangeMode ? (
-          <p className="bg-yellow-100 p-3 rounded-md text-sm text-gray-700 mb-4">
-            You can select a <strong>range of dates</strong>, and all will have the <strong>same time slots</strong>.
-          </p>
-        ) : (
-          <p className="bg-yellow-100 p-3 rounded-md text-sm text-gray-700 mb-4">
-            You can <strong>choose different time slots</strong> for <strong>each selected date</strong>.
-          </p>
-        )}
+              {/* Dynamic Note Display */}
+              {isDateRangeMode ? (
+                <p className="bg-yellow-100 p-3 rounded-md text-sm text-gray-700 mb-4">
+                  You can select a <strong>range of dates</strong>, and all will have the <strong>same time slots</strong>.
+                </p>
+              ) : (
+                <p className="bg-yellow-100 p-3 rounded-md text-sm text-gray-700 mb-4">
+                  You can <strong>choose different time slots</strong> for <strong>each selected date</strong>.
+                </p>
+              )}
 
-        <label className="block text-gray-700 font-semibold mb-1">Select Dates:</label>
-        {isDateRangeMode ? (
-          <DatePicker
-            selectsRange
-            startDate={startDate}
-            endDate={endDate}
-            onChange={handleDateChange}
-            minDate={new Date(new Date().setDate(new Date().getDate() + 2))}
-            inline
-          />
-        ) : (
-          <DatePicker
-            selected={null}
-            onChange={handleSingleDateChange}
-            minDate={new Date(new Date().setDate(new Date().getDate() + 2))}
-            inline
-          />
-        )}
+              <label className="block text-gray-700 font-semibold mb-1">Select Dates:</label>
+              {isDateRangeMode ? (
+                <DatePicker
+                  selectsRange
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChange={handleDateChange}
+                  minDate={new Date(new Date().setDate(new Date().getDate() + 2))}
+                  inline
+                />
+              ) : (
+                <DatePicker
+                  selected={null}
+                  onChange={handleSingleDateChange}
+                  minDate={new Date(new Date().setDate(new Date().getDate() + 2))}
+                  inline
+                />
+              )}
 
-        {selectedDates.length > 0 && (
-          <div>
-            <h3 className="text-lg font-semibold">
-              {isDateRangeMode ? `Selected Date Range: ${selectedDates[0]} to ${selectedDates[selectedDates.length - 1]}` : "Selected Dates:"}
-            </h3>
+              {selectedDates.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold">
+                    {isDateRangeMode ? `Selected Date Range: ${selectedDates[0]} to ${selectedDates[selectedDates.length - 1]}` : "Selected Dates:"}
+                  </h3>
 
-            {!isDateRangeMode ? (
-              selectedDates.map((date, index) => (
-                <div key={index}>
-                  <h4 className="text-md font-semibold mt-2">{date}</h4>
-                  <div className="grid grid-cols-3 gap-2">
-                    {timeSlots.map((slot, slotIndex) => (
-                      <button
-                        key={slotIndex}
-                        className={`p-2 border rounded-md 
+                  {!isDateRangeMode ? (
+                    selectedDates.map((date, index) => (
+                      <div key={index}>
+                        <h4 className="text-md font-semibold mt-2">{date}</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {timeSlots.map((slot, slotIndex) => (
+                            <button
+                              key={slotIndex}
+                              className={`p-2 border rounded-md 
                       ${selectedSlots[date]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"} 
                       ${bookedSlots[date]?.includes(slot) ? "bg-gray-300 cursor-not-allowed opacity-50" : ""}`}
-                        onClick={() => !bookedSlots[date]?.includes(slot) && handleSlotChange(date, slot)}
-                        disabled={bookedSlots[date]?.includes(slot)}
-                      >
-                        {slot}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div>
-                <h4 className="text-md font-semibold mt-2">Time Slots:</h4>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((slot, slotIndex) => {
-                    const isBooked = selectedDates.some((date) => bookedSlots[date]?.includes(slot));
+                              onClick={() => !bookedSlots[date]?.includes(slot) && handleSlotChange(date, slot)}
+                              disabled={bookedSlots[date]?.includes(slot)}
+                            >
+                              {slot}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div>
+                      <h4 className="text-md font-semibold mt-2">Time Slots:</h4>
+                      <div className="grid grid-cols-3 gap-2">
+                        {timeSlots.map((slot, slotIndex) => {
+                          const isBooked = selectedDates.some((date) => bookedSlots[date]?.includes(slot));
 
-                    return (
-                      <button
-                        key={slotIndex}
-                        className={`p-2 border rounded-md 
+                          return (
+                            <button
+                              key={slotIndex}
+                              className={`p-2 border rounded-md 
                       ${selectedSlots[selectedDates[0]]?.includes(slot) ? "bg-blue-500 text-white" : "bg-gray-100"} 
                       ${isBooked ? "bg-gray-300 cursor-not-allowed opacity-50" : ""}`}
-                        onClick={() => !isBooked && handleSlotChange(selectedDates[0], slot)}
-                        disabled={isBooked}
-                      >
-                        {slot}
-                      </button>
-                    );
-                  })}
+                              onClick={() => !isBooked && handleSlotChange(selectedDates[0], slot)}
+                              disabled={isBooked}
+                            >
+                              {slot}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+              )}
+            </div>
 
-      {/* Right Section: Booking Details */}
-      <div className="w-full md:w-1/3">
-        <h2 className="text-3xl text-brown font-bold text-center mb-6">Book {auditorium.name}</h2>
+            {/* Right Section: Booking Details */}
+            <div className="w-full md:w-1/3">
+              <h2 className="text-3xl text-brown font-bold text-center mb-6">Book {auditorium.name}</h2>
 
-        <label className="block text-gray-700 font-semibold mb-1">Event Name:</label>
-        <input
-          type="text"
-          value={eventName}
-          onChange={(e) => setEventName(e.target.value)}
-          className="w-full p-3 border rounded-md bg-gray-50 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
-          placeholder="Enter Event Name"
-        />
-
-        <label className="block text-gray-700 font-semibold mb-1">Select Amenities:</label>
-        <div className="grid grid-cols-1 gap-3 mt-2">
-          {auditorium.amenities.map((amenity, index) => (
-            <label key={index} className="flex items-center space-x-2 bg-white p-3 rounded-md border">
+              <label className="block text-gray-700 font-semibold mb-1">Event Name:</label>
               <input
-                type="checkbox"
-                checked={selectedAmenities.includes(amenity.name)}
-                onChange={() => handleAmenityChange(amenity)}
-                className="mr-2"
+                type="text"
+                value={eventName}
+                onChange={(e) => setEventName(e.target.value)}
+                className="w-full p-3 border rounded-md bg-gray-50 text-gray-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
+                placeholder="Enter Event Name"
               />
-              <span>{amenity.name} (+₹{amenity.cost})</span>
-            </label>
-          ))}
-        </div>
 
-        <h2 className="text-xl font-bold mt-6 text-gray-800">Total Cost: ₹{totalPrice}</h2>
+              <label className="block text-gray-700 font-semibold mb-1">Select Amenities:</label>
+              <div className="grid grid-cols-1 gap-3 mt-2">
+                {auditorium.amenities.map((amenity, index) => (
+                  <label key={index} className="flex items-center space-x-2 bg-white p-3 rounded-md border">
+                    <input
+                      type="checkbox"
+                      checked={selectedAmenities.includes(amenity.name)}
+                      onChange={() => handleAmenityChange(amenity)}
+                      className="mr-2"
+                    />
+                    <span>{amenity.name} (+₹{amenity.cost})</span>
+                  </label>
+                ))}
+              </div>
 
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-brown text-white p-3 rounded-md text-lg mt-4 hover:bg-brown-light transition duration-300"
-        >
-          Confirm Booking
-        </button>
+              <h2 className="text-xl font-bold mt-6 text-gray-800">Total Cost: ₹{totalPrice}</h2>
+
+              <button
+                onClick={handleSubmit}
+                className="w-full bg-brown text-white p-3 rounded-md text-lg mt-4 hover:bg-brown-light transition duration-300"
+              >
+                Confirm Booking
+              </button>
+            </div>
+          </div>
+        </FixedLayout>
       </div>
-    </div>
-
+    </>
   );
 }
 
