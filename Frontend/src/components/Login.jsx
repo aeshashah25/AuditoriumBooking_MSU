@@ -380,29 +380,6 @@ const Login = () => {
           <div className="lg:mt-28 w-full max-w-md p-8 bg-white rounded-lg shadow-md">
             <h2 className="text-2xl font-bold text-center mb-6">{isLogin ? "Login" : "Sign Up"}</h2>
             {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{error}</div>}
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-6">
-      {userData ? (
-        <div className="p-6 bg-white rounded-lg shadow-md text-center">
-          <h2 className="text-2xl font-semibold mb-4">
-            Welcome, {userData.name}
-          </h2>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-          >
-            Logout
-          </button>
-        </div>
-      ) : (
-        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold text-center mb-6">
-            {isLogin ? "Login" : "Sign Up"}
-          </h2>
-          {error && (
-            <div className="bg-red-100 text-red-600 p-3 rounded mb-4">
-              {error}
-            </div>
-          )}
 
             <form onSubmit={formik.handleSubmit}>
               {!isLogin && (
@@ -500,154 +477,152 @@ const Login = () => {
               )}
 
 
-            <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-              {isLogin ? "Login" : "Sign Up"}
-            </button>
-          </form>
+              <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                {isLogin ? "Login" : "Sign Up"}
+              </button>
+            </form>
 
-          {isLogin && (
-            <div className="text-center mt-4">
-              <span onClick={() => setForgotPassword(true)} className="text-brown cursor-pointer">
-                Forgot Password?
-              </span>
-            </div>
-          )}
+            {isLogin && (
+              <div className="text-center mt-4">
+                <span onClick={() => setForgotPassword(true)} className="text-brown cursor-pointer">
+                  Forgot Password?
+                </span>
+              </div>
+            )}
 
             {forgotPassword && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
                   <h2 className="text-xl font-semibold mb-4">Reset Password</h2>
 
-                {changePasswordError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{changePasswordError}</div>}
+                  {changePasswordError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{changePasswordError}</div>}
 
-                {/* Step 1: Email Input */}
-                {!otpSent && (
-                  <form onSubmit={handleEmailSubmit} className="space-y-4">
-                    <div className="mb-4">
-                      <label className="block text-gray-700">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full p-2 border rounded bg-white"
-                      />
-                      {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
-                    </div>
-
-                    <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                      Send OTP
-                    </button>
-                  </form>
-                )}
-
-                {/* Step 2: OTP Input */}
-                {otpSent && !otpVerified && (
-                  <form onSubmit={verifyOtp} className="space-y-4">
-                    <div className="mb-4">
-                      <label className="block text-gray-700">Enter OTP</label>
-                      <input
-                        type="text"
-                        name="otp"
-                        placeholder="Enter OTP"
-                        value={otp}
-                        onChange={(e) => setOtp(e.target.value)}
-                        className="w-full p-2 border rounded bg-white"
-                      />
-                      {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
-                    </div>
-
-                    <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                      Verify OTP
-                    </button>
-
-
-                  </form>
-                )}
-
-                {/* Step 3: New Password Input */}
-                {otpVerified && (
-                  <form onSubmit={handleChangePassword} className="space-y-4">
-                    <div className="mb-4">
-                      <label className="block text-gray-700">New Password</label>
-                      <div className="relative">
+                  {/* Step 1: Email Input */}
+                  {!otpSent && (
+                    <form onSubmit={handleEmailSubmit} className="space-y-4">
+                      <div className="mb-4">
+                        <label className="block text-gray-700">Email</label>
                         <input
-                          type={showNewPassword ? "text" : "password"}
-                          name="newPassword"
-                          placeholder="Enter new password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
+                          type="email"
+                          name="email"
+                          placeholder="Enter your email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
                           className="w-full p-2 border rounded bg-white"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-2 top-2 text-gray-500"
-                        >
-                          {showNewPassword ? "Hide" : "Show"}
-                        </button>
+                        {emailError && <p className="text-red-500 text-sm">{emailError}</p>}
                       </div>
-                      {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-                    </div>
 
-                    <div className="mb-4">
-                      <label className="block text-gray-700">Confirm New Password</label>
-                      <div className="relative">
+                      <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                        Send OTP
+                      </button>
+                    </form>
+                  )}
+
+                  {/* Step 2: OTP Input */}
+                  {otpSent && !otpVerified && (
+                    <form onSubmit={verifyOtp} className="space-y-4">
+                      <div className="mb-4">
+                        <label className="block text-gray-700">Enter OTP</label>
                         <input
-                          type={showConfirmPassword ? "text" : "password"}
-                          name="confirmPassword"
-                          placeholder="Confirm new password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          type="text"
+                          name="otp"
+                          placeholder="Enter OTP"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
                           className="w-full p-2 border rounded bg-white"
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          className="absolute right-2 top-2 text-gray-500"
-                        >
-                          {showConfirmPassword ? "Hide" : "Show"}
-                        </button>
+                        {otpError && <p className="text-red-500 text-sm">{otpError}</p>}
                       </div>
-                      {confirmPasswordError && <p className="text-red-500 text-sm">{confirmPasswordError}</p>}
-                    </div>
 
-                    <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                      Change Password
-                    </button>
-                  </form>
-                )}
+                      <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                        Verify OTP
+                      </button>
 
-                <button
-                  onClick={() => setForgotPassword(false)}
-                  className="mt-4 w-full bg-gray-300 text-gray-700 p-2 rounded"
-                >
-                  Close
-                </button>
+
+                    </form>
+                  )}
+
+                  {/* Step 3: New Password Input */}
+                  {otpVerified && (
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div className="mb-4">
+                        <label className="block text-gray-700">New Password</label>
+                        <div className="relative">
+                          <input
+                            type={showNewPassword ? "text" : "password"}
+                            name="newPassword"
+                            placeholder="Enter new password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full p-2 border rounded bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-2 top-2 text-gray-500"
+                          >
+                            {showNewPassword ? "Hide" : "Show"}
+                          </button>
+                        </div>
+                        {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-gray-700">Confirm New Password</label>
+                        <div className="relative">
+                          <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            name="confirmPassword"
+                            placeholder="Confirm new password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full p-2 border rounded bg-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-2 top-2 text-gray-500"
+                          >
+                            {showConfirmPassword ? "Hide" : "Show"}
+                          </button>
+                        </div>
+                        {confirmPasswordError && <p className="text-red-500 text-sm">{confirmPasswordError}</p>}
+                      </div>
+
+                      <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+                        Change Password
+                      </button>
+                    </form>
+                  )}
+
+                  <button
+                    onClick={() => setForgotPassword(false)}
+                    className="mt-4 w-full bg-gray-300 text-gray-700 p-2 rounded"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-
-
-
-          <p className="mt-4 text-center">
-            {isLogin ? (
-              <span onClick={() => setIsLogin(false)} className="text-black cursor-pointer">
-                Don't have an account? <span className="text-brown-light">Sign Up</span>
-              </span>
-            ) : (
-              <span onClick={() => setIsLogin(true)} className="text-black cursor-pointer">
-                Already have an account? <span className="text-brown-light">Login</span>
-              </span>
             )}
-          </p>
-        </div>
-      )}
-    </div>
-    
+
+            <p className="mt-4 text-center">
+              {isLogin ? (
+                <span onClick={() => setIsLogin(false)} className="text-black cursor-pointer">
+                  Don't have an account? <span className="text-brown-light">Sign Up</span>
+                </span>
+              ) : (
+                <span onClick={() => setIsLogin(true)} className="text-black cursor-pointer">
+                  Already have an account? <span className="text-brown-light">Login</span>
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+
+    </>
   );
-  
 
 }
 export default Login;
