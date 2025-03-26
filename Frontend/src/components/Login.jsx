@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useFormik } from "formik";
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useLocation } from "react-router-dom";
 import Navbar from '../components/Navbar'
@@ -13,6 +13,7 @@ const Login = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
+  const [resendDisabled, setResendDisabled] = useState(false);
 
   const [forgotPassword, setForgotPassword] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -160,73 +161,41 @@ const Login = () => {
     })
     .defined();
 
-  const formik = useFormik({
-    initialValues: {
-      name: "",
-      email: "",
-      password: "",
-      phone: "",
-      confirmPassword: "", // Add this to avoid errors
-    },
-    validationSchema: isLogin ? loginValidationSchema : signupValidationSchema,
-    onSubmit: async (values) => {
-      if (!isLogin && !otpSent) {
-        try {
-          const response = await axios.post(
-            "http://localhost:5000/api/signup",
-            values
-          );
-          alert(response.data.message);
-          setSignupEmail(values.email); // Store email for OTP verification
-          setOtpSent(true); // Show OTP input field
-          setError(""); // Clear previous errors
-        } catch (err) {
-          const errorMsg = err.response?.data?.message || "Signup failed.";
-          setError(errorMsg); // Display error message on screen
-          if (errorMsg === "OTP already sent. Please verify it.") {
-            setOtpSent(true); // Ensure OTP field appears automatically
-          }
-        }
-      } else if (!isLogin && otpSent) {
-        try {
-          const response = await axios.post(
-            "http://localhost:5000/api/verify-otp",
-            {
-              email: signupEmail,
-              otp,
-            }
-          );
-
-          alert(response.data.message);
-          setIsLogin(true); // Switch to login
-          setOtpSent(false);
-          setOtp("");
-          setError("");
-        } catch (err) {
-          setError(err.response?.data?.message || "Invalid OTP.");
-        }
-      } else {
-        try {
-          const response = await axios.post(
-            "http://localhost:5000/api/login",
-            values
-          );
-          alert(response.data.message);
-          if (response.data.token) {
-            localStorage.setItem("jwt_token", response.data.token);
-            localStorage.setItem("user_role", response.data.role);
-            localStorage.setItem("user_id", response.data.userId);
-            navigate(
-              response.data.role === "admin" ? "/DashBoard" : "/MainPage"
-            );
-          }
-        } catch (err) {
-          setError(err.response?.data?.message || "An error occurred.");
-        }
+   
+  const handleResendOtp = async () => {
+    if (!signupEmail) {
+      alert("Email is missing. Please start the signup process again.");
+      return;
+    }
+  
+    try {
+      setResendDisabled(true);
+  
+      const response = await fetch("http://localhost:5000/api/resend-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: signupEmail }),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`); // Catch HTTP errors
       }
-    },
-  });
-
+  
+      const data = await response.json(); // Ensure response is valid JSON
+  
+      alert(data.message); // Show success message
+  
+      // Re-enable button after 3 minutes
+      setTimeout(() => setResendDisabled(false), 180000);
+    } catch (error) {
+      console.error("Error resending OTP:", error);
+      alert(error.message || "Failed to resend OTP.");
+      setResendDisabled(false);
+    }
+  };
+  
   const togglePasswordVisibility = (field) => {
     if (field === "password") {
       setShowPassword((prev) => !prev);
@@ -462,25 +431,26 @@ const Login = () => {
                   )}
                 </div>
               )}
-              {!isLogin && otpSent && (
-                <div className="mb-4">
-                  <label className="block text-gray-700">Enter OTP</label>
-                  <input
-                    type="text"
-                    name="otp"
-                    placeholder="Enter OTP"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    className="w-full p-2 border rounded bg-white"
-                  />
-                </div>
-              )}
-
+            
 
               <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-                {isLogin ? "Login" : "Sign Up"}
+              {isLogin ? "Login" : otpSent ? "Verify OTP" : "Sign Up"}
               </button>
             </form>
+            {otpSent && !otpVerified && (
+          <div className="mt-4">
+            <label className="block text-gray-700">Enter OTP</label>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="w-full p-2 border rounded bg-white"
+            />
+            <button onClick={handleResendOtp} disabled={resendDisabled} className="w-full bg-gray-400 text-white p-2 rounded mt-2">
+              {resendDisabled ? "Wait to resend" : "Error"}
+            </button>
+          </div>
+        )}
 
             {isLogin && (
               <div className="text-center mt-4">
@@ -497,8 +467,8 @@ const Login = () => {
 
                   {changePasswordError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{changePasswordError}</div>}
 
-                  {/* Step 1: Email Input */}
-                  {!otpSent && (
+                 {/* Step 1: Email Input */}
+                 {!otpSent && (
                     <form onSubmit={handleEmailSubmit} className="space-y-4">
                       <div className="mb-4">
                         <label className="block text-gray-700">Email</label>

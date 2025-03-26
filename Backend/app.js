@@ -107,34 +107,106 @@ app.post("/api/signup", async (req, res) => {
 });
 
 // OTP Verification Route
-app.post("/api/verify-otp", async (req, res) => {
-  const { email, otp } = req.body;
-  try {
-    if (!otpStore[email] || otpStore[email].otp !== otp) {
-      return res.status(400).json({ message: "Invalid OTP or expired." });
-    }
+// Send OTP
+app.post("/api/send-otp", async (req, res) => {
+  console.log("Received request to /api/send-otp with data:", req.body);
 
-    const { name, password, phone } = otpStore[email];
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const { email, name, password, phone } = req.body;
 
-    const pool = await sql.connect(dbConfig);
-    await pool
-      .request()
-      .input("name", sql.NVarChar, name)
-      .input("email", sql.NVarChar, email)
-      .input("password", sql.NVarChar, hashedPassword)
-      .input("phone", sql.NVarChar, phone)
-      .query("INSERT INTO UsersDetails (name, email, password, phone) VALUES (@name, @email, @password, @phone)");
-
-    delete otpStore[email]; // Remove OTP after successful verification
-
-    res.status(201).json({ message: "User registered successfully." });
-  } catch (err) {
-    res.status(500).json({ message: "Error: " + err.message });
+  if (!email || !name || !password || !phone) {
+    return res.status(400).json({ message: "All fields are required." });
   }
 
+  const currentTime = Date.now();
 
+  if (otpStore[email] && otpStore[email].requestedAt + 60000 > currentTime) {
+    return res.status(400).json({ message: "Please wait for 3 minutes before requesting a new OTP." });
+  }
+
+  const otp = Math.floor(100000 + Math.random() * 900000); // Generate new OTP
+  otpStore[email] = { otp, name, password, phone, requestedAt: currentTime }; // Store OTP with timestamp
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your OTP Code",
+      text: `Your OTP is: ${otp}. It will expire in 3 minutes.`,
+    });
+
+    res.json({ message: "OTP sent successfully. It expires in 3 minutes.If it is expired or Invalid then wai tfor 3 minutes for new OTP requests." });
+  } catch (error) {
+    res.status(500).json({ message: "Error sending OTP email", error: error.message });
+  }
 });
+
+// Resend OTP
+app.post("/api/resend-otp", async (req, res) => {
+  const { email } = req.body;
+
+  if (!otpStore[email]) {
+    return res.status(400).json({ message: "No previous OTP found. Register first." });
+  }
+
+  const currentTime = Date.now();
+  if (currentTime < otpStore[email].requestedAt + 60000) {
+    return res.status(400).json({ message: "Please wait before requesting a new OTP." });
+  }
+
+  const newOtp = Math.floor(100000 + Math.random() * 900000);
+  otpStore[email].otp = newOtp;
+  otpStore[email].requestedAt = currentTime; // Update timestamp
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "New OTP Code",
+      text: `Your new OTP is: ${newOtp}. It will expire in 3 minutes.`,
+    });
+
+    res.json({ message: "New OTP sent. It expires in 3 minutes." });
+  } catch (error) {
+    res.status(500).json({ message: "Error sending new OTP", error: error.message });
+  }
+});
+
+// Verify OTP
+app.post("/api/verify-otp", async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!otpStore[email]) {
+    return res.status(400).json({ message: "OTP expired. Request a new one." });
+  }
+
+  const { otp: storedOtp, name, password, phone, requestedAt } = otpStore[email];
+
+  if (Date.now() > requestedAt + 600000) { // Expiry check
+    delete otpStore[email];
+    return res.status(400).json({ message: "OTP expired. Request a new one." });
+  }
+
+  if (parseInt(otp) !== storedOtp) {
+    return res.status(400).json({ message: "Invalid OTP,Wait for3 minutes for requesting new OTP" });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const pool = await sql.connect(dbConfig);
+  await pool
+    .request()
+    .input("name", sql.NVarChar, name)
+    .input("email", sql.NVarChar, email)
+    .input("password", sql.NVarChar, hashedPassword)
+    .input("phone", sql.NVarChar, phone)
+    .query("INSERT INTO UsersDetails (name, email, password, phone) VALUES (@name, @email, @password, @phone)");
+
+  delete otpStore[email]; // Remove OTP after successful verification
+
+  res.status(201).json({ message: "User registered successfully." });
+});
+
+
+
 
 app.post("/api/check-existence", async (req, res) => {
   const { email, phone } = req.body;
