@@ -557,12 +557,12 @@ app.get("/user/bookings/:userId", async (req, res) => {
             ORDER BY b.Dates DESC;`
       );
 
-      // const bookings = result.recordset.map(booking => ({
-      //   ...booking,
-      //   dates: JSON.parse(booking.dates) // Convert stored JSON dates back to array
-      // }));
-      
-    res.status(200).json(result.recordset);
+      const bookings = result.recordset.map(booking => ({
+        ...booking,
+        Dates: JSON.parse(booking.Dates) // Convert stored JSON dates back to array
+      }));
+      res.status(200).json(bookings);
+    //res.status(200).json(result.recordset);
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     res.status(500).json({ error: "Internal server error" });
