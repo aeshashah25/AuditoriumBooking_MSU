@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import nodemailer from "nodemailer";
 import moment from "moment";
-import cron from"node-cron";
+import cron from "node-cron";
 
 const router = express.Router();
 const app = express();
@@ -550,14 +550,18 @@ app.get("/user/bookings/:userId", async (req, res) => {
       .request()
       .input("userId", sql.Int, userId)
       .query(
-        `SELECT b.id, b.date, b.start_time, b.end_time, b.booking_status, 
-                a.name AS auditorium_name
-         FROM bookings b
-         JOIN auditoriums a ON b.AuditoriumID = a.id
-         WHERE b.UserID = @userId
-         ORDER BY b.date DESC`
+        `SELECT b.*, a.name AS auditorium_name
+            FROM bookings b
+            JOIN auditoriums a ON b.AuditoriumID = a.id
+            WHERE b.UserID = @userId
+            ORDER BY b.Dates DESC;`
       );
 
+      // const bookings = result.recordset.map(booking => ({
+      //   ...booking,
+      //   dates: JSON.parse(booking.dates) // Convert stored JSON dates back to array
+      // }));
+      
     res.status(200).json(result.recordset);
   } catch (error) {
     console.error("Error fetching user bookings:", error);
