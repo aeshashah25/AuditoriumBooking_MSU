@@ -246,27 +246,131 @@ function ViewBookingRequests() {
               <strong>Event:</strong> {selectedBooking.event_name}
             </p>
             <p>
+              <strong>Date & Time:</strong>
+              {(() => {
+                if (!Array.isArray(selectedBooking.dates) || selectedBooking.dates.length === 0) {
+                  return <p className="text-gray-500">No dates available</p>;
+                }
+
+                const sortedDates = selectedBooking.dates
+                  .map((dateObj) => ({
+                    date: dateObj.date || null,
+                    date_range: dateObj.date_range || null,
+                    time_slots: Array.isArray(dateObj.time_slots)
+                      ? dateObj.time_slots.sort()
+                      : [],
+                  }))
+                  .sort(
+                    (a, b) =>
+                      new Date(a.date || a.date_range.split(" - ")[0]) -
+                      new Date(b.date || b.date_range.split(" - ")[0])
+                  );
+
+                const formattedDates = [];
+                let tempStart = sortedDates[0]?.date || sortedDates[0]?.date_range;
+                let prevTimeSlots = sortedDates[0]?.time_slots;
+                let currentRange = [tempStart];
+
+                for (let i = 1; i < sortedDates.length; i++) {
+                  const { date, date_range, time_slots } = sortedDates[i];
+                  const currentDate = date || date_range;
+
+                  if (JSON.stringify(prevTimeSlots) === JSON.stringify(time_slots)) {
+                    currentRange.push(currentDate);
+                  } else {
+                    formattedDates.push({
+                      date_range: formatDateRange(currentRange),
+                      time_slots: formatTimeSlots(prevTimeSlots),
+                    });
+
+                    currentRange = [currentDate];
+                    prevTimeSlots = time_slots;
+                  }
+                }
+
+                formattedDates.push({
+                  date_range: formatDateRange(currentRange),
+                  time_slots: formatTimeSlots(prevTimeSlots),
+                });
+
+                return formattedDates.map((entry, index) => (
+                  <div key={index} className="text-xs mb-1 p-1 bg-gray-100 rounded">
+                    <span className="font-semibold">📅 {entry.date_range}</span>
+                    <br />
+                    🕒 {entry.time_slots}
+                  </div>
+                ));
+
+                function formatDateRange(dateStr) {
+                  if (Array.isArray(dateStr)) {
+                    const startDate = formatDate(dateStr[0].split(" - ")[0]);
+                    const endDate = formatDate(dateStr[dateStr.length - 1].split(" - ").pop());
+                    return startDate === endDate ? startDate : `${startDate} to ${endDate}`;
+                  }
+                  return formatDate(dateStr.split(" - ")[0]) + " to " + formatDate(dateStr.split(" - ")[1]);
+                }
+
+                function formatDate(dateStr) {
+                  if (!dateStr) return "Invalid Date";
+                  const date = new Date(dateStr.trim());
+                  return isNaN(date.getTime())
+                    ? "Invalid Date"
+                    : date.toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                    });
+                }
+
+                function formatTimeSlots(timeSlots) {
+                  if (timeSlots.length === 0) return "No time slots";
+                  if (timeSlots.length === 1) return timeSlots[0];
+
+                  let groupedSlots = [];
+                  let startSlot = timeSlots[0].split(" - ")[0];
+                  let endSlot = timeSlots[0].split(" - ")[1];
+
+                  for (let i = 1; i < timeSlots.length; i++) {
+                    const [currentStart, currentEnd] = timeSlots[i].split(" - ");
+
+                    if (currentStart === endSlot) {
+                      endSlot = currentEnd;
+                    } else {
+                      groupedSlots.push(`${startSlot} - ${endSlot}`);
+                      startSlot = currentStart;
+                      endSlot = currentEnd;
+                    }
+                  }
+                  groupedSlots.push(`${startSlot} - ${endSlot}`);
+
+                  return groupedSlots.join(", ");
+                }
+              })()}
+
+            </p>
+            <p>
+              <strong>Amentities:</strong> {selectedBooking.amenities}
+            </p>
+            <p>
               <strong>Cost:</strong> ₹{selectedBooking.total_amount}
             </p>
 
-            <div className="mt-4 flex justify-center gap-3">
-              <button
-                onClick={() => setActionType("approve")}
-                disabled={actionType === "reject"}
-                className={`py-1 px-3 rounded text-white ${actionType === "approve" ? "bg-green-700" : "bg-green-500 hover:bg-green-700"
-                  } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-              >
-                Approve
-              </button>
-              <button
-                onClick={() => setActionType("reject")}
-                disabled={actionType === "approve"}
-                className={`py-1 px-3 rounded text-white ${actionType === "reject" ? "bg-red-700" : "bg-red-500 hover:bg-red-700"
-                  } disabled:bg-gray-400 disabled:cursor-not-allowed`}
-              >
-                Reject
-              </button>
-            </div>
+            {!actionType && (
+              <div className="mt-4 flex justify-center gap-3">
+                <button
+                  onClick={() => setActionType("approve")}
+                  className="py-1 px-3 rounded text-white bg-green-500 hover:bg-green-700"
+                >
+                  Approve
+                </button>
+                <button
+                  onClick={() => setActionType("reject")}
+                  className="py-1 px-3 rounded text-white bg-red-500 hover:bg-red-700"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
 
             {actionType === "approve" && (
               <div className="mt-4">
@@ -294,19 +398,26 @@ function ViewBookingRequests() {
             )}
 
             <div className="mt-6 flex justify-center gap-4">
+              {/* Cancel Button (Always Visible) */}
               <button
                 onClick={closeModal}
                 className="bg-gray-500 hover:bg-gray-700 text-white py-2 px-4 rounded"
               >
                 Cancel
               </button>
-              <button
-                onClick={handleAction}
-                className="py-2 px-4 rounded text-white bg-blue-500 hover:bg-blue-700"
-              >
-                {actionType === "approve" ? "Approve" : "Reject"}
-              </button>
+
+              {/* Approve/Reject Button (Only Show When actionType is Set) */}
+              {actionType && (
+                <button
+                  onClick={handleAction}
+                  className={`py-2 px-4 rounded text-white ${actionType === "approve" ? "bg-green-500 hover:bg-green-700" : "bg-red-500 hover:bg-red-700"
+                    }`}
+                >
+                  {actionType === "approve" ? "Approve" : "Reject"}
+                </button>
+              )}
             </div>
+
           </div>
         </div>
       )}
