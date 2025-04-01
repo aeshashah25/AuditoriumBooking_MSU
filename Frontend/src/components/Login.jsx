@@ -13,8 +13,7 @@ const Login = () => {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
-  const [resendDisabled, setResendDisabled] = useState(false);
-
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
   const [forgotPassword, setForgotPassword] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -160,42 +159,95 @@ const Login = () => {
       password: passwordValidation,
     })
     .defined();
+ 
 
-   
-  const handleResendOtp = async () => {
-    if (!signupEmail) {
-      alert("Email is missing. Please start the signup process again.");
-      return;
-    }
-  
-    try {
-      setResendDisabled(true);
-  
-      const response = await fetch("http://localhost:5000/api/resend-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: signupEmail }),
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`); // Catch HTTP errors
+
+const formik = useFormik({
+  initialValues: {
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    phone: "",
+    otp: "",
+  },
+  validationSchema: isLogin ? loginValidationSchema : signupValidationSchema,
+  onSubmit: async (values) => {
+    if (!isLogin && !otpSent) {
+      // Step 1: Send OTP
+      try {
+        console.log("Sending OTP with values:", values);
+
+        const response = await axios.post("http://localhost:5000/api/send-otp", values);
+        alert(response.data.message);
+        setSignupEmail(values.email);
+        setOtpSent(true);
+
+        setError("");
+      } catch (err) {
+        setError(err.response?.data?.message || "Error sending OTP.");
       }
-  
-      const data = await response.json(); // Ensure response is valid JSON
-  
-      alert(data.message); // Show success message
-  
-      // Re-enable button after 3 minutes
-      setTimeout(() => setResendDisabled(false), 180000);
-    } catch (error) {
-      console.error("Error resending OTP:", error);
-      alert(error.message || "Failed to resend OTP.");
-      setResendDisabled(false);
+    } else if (!isLogin && otpSent && !isOtpVerified) {
+      // Step 2: Verify OTP
+      try {
+        const response = await axios.post("http://localhost:5000/api/verify-otp", {
+          email: signupEmail,
+          otp: values.otp,
+        });
+        alert(response.data.message);
+        setIsOtpVerified(true);
+        setError("");
+        setIsLogin(true); // Set login mode
+
+      } catch (err) {
+        setError(err.response?.data?.message || "Invalid OTP. Try again or request a new one.");
+      }
+    } else if (!isLogin && otpSent && isOtpVerified) {
+      // Step 3: Complete Signup
+      try {
+        const response = await axios.post("http://localhost:5000/api/signup", values);
+        alert(response.data.message);
+
+        // ✅ Reset states
+        setOtpSent(false);
+        setIsOtpVerified(false);
+        formik.resetForm(); // ✅ Clear form
+
+        // ✅ Redirect to login (force navigation)
+        setIsLogin(true); // Set login mode
+      } catch (err) {
+        setError(err.response?.data?.message || "Signup failed.");
+      }
+    } else {
+      // Step 4: Login
+      try {
+        const response = await axios.post("http://localhost:5000/api/login", values);
+        alert(response.data.message);
+        if (response.data.token) {
+          localStorage.setItem("jwt_token", response.data.token);
+          localStorage.setItem("user_role", response.data.role);
+          localStorage.setItem("user_id", response.data.userId);
+          navigate(response.data.role === "admin" ? "/DashBoard" : "/MainPage");
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || "Login failed.");
+      }
     }
-  };
-  
+  },
+});
+
+    // Resend OTP Handler
+    const handleResendOTP = async () => {
+      try {
+        const response = await axios.post("http://localhost:5000/api/resend-otp", { email: signupEmail });
+        alert(response.data.message);
+        setError("");
+      } catch (err) {
+        setError(err.response?.data?.message || "Error resending OTP.");
+      }
+    };
+    
+
   const togglePasswordVisibility = (field) => {
     if (field === "password") {
       setShowPassword((prev) => !prev);
@@ -287,8 +339,8 @@ const Login = () => {
     } catch (error) {
       setChangePasswordError(
         error.response?.data?.message ||
-          error.message ||
-          "Password reset failed"
+        error.message ||
+        "Password reset failed"
       );
     }
   };
@@ -336,7 +388,7 @@ const Login = () => {
 
   return (
     <>
-     
+
       <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-6">
         {userData ? (
           <div className="p-6 bg-white rounded-lg shadow-md text-center">
@@ -351,105 +403,110 @@ const Login = () => {
             {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{error}</div>}
 
             <form onSubmit={formik.handleSubmit}>
-              {!isLogin && (
-                <div className="mb-4">
-                  <label className="block text-gray-700">Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Enter your name"
-                    value={formik.values.name}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    disabled={otpSent} // Disable when OTP is sent
-                    className="w-full p-2 border rounded bg-white"
-                  />
-                  {formik.touched.name && formik.errors.name && (
-                    <p className="text-red-500 text-sm">{formik.errors.name}</p>
-                  )}
-                </div>
+          {!isLogin && (
+            <div className="mb-4">
+              <label className="block text-gray-700">Name</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Enter your name"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                disabled={otpSent}
+                className="w-full p-2 border rounded bg-white"
+              />
+              {formik.touched.name && formik.errors.name && (
+                <p className="text-red-500 text-sm">{formik.errors.name}</p>
               )}
+            </div>
+          )}
 
-              <div className="mb-4">
-                <label className="block text-gray-700">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  value={formik.values.email}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  disabled={otpSent} // Disable when OTP is sent
-                  className="w-full p-2 border rounded bg-white"
-                />
-                {formik.touched.email && formik.errors.email && (
-                  <p className="text-red-500 text-sm">{formik.errors.email}</p>
-                )}
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-gray-700">Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    placeholder="Enter your password"
-                    value={formik.values.password}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    disabled={otpSent} // Disable when OTP is sent
-                    className="w-full p-2 border rounded pr-10 bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => togglePasswordVisibility("password")}
-                    className="absolute right-2 top-2 text-gray-500"
-                  >
-                    {showPassword ? "Hide" : "Show"}
-                  </button>
-                </div>
-                {formik.touched.password && formik.errors.password && (
-                  <p className="text-red-500 text-sm">{formik.errors.password}</p>
-                )}
-              </div>
-
-              {!isLogin && (
-                <div className="mb-4">
-                  <label className="block text-gray-700">Phone Number</label>
-                  <input
-                    type="text"
-                    name="phone"
-                    placeholder="Enter your phone number"
-                    value={formik.values.phone}
-                    onChange={formik.handleChange}
-                    onBlur={formik.handleBlur}
-                    disabled={otpSent} // Disable when OTP is sent
-                    className="w-full p-2 border rounded bg-white"
-                  />
-                  {formik.touched.phone && formik.errors.phone && (
-                    <p className="text-red-500 text-sm">{formik.errors.phone}</p>
-                  )}
-                </div>
-              )}
-            
-
-              <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
-              {isLogin ? "Login" : otpSent ? "Verify OTP" : "Sign Up"}
-              </button>
-            </form>
-            {otpSent && !otpVerified && (
-          <div className="mt-4">
-            <label className="block text-gray-700">Enter OTP</label>
+          <div className="mb-4">
+            <label className="block text-gray-700">Email</label>
             <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              disabled={otpSent}
               className="w-full p-2 border rounded bg-white"
             />
-            <button onClick={handleResendOtp} disabled={resendDisabled} className="w-full bg-gray-400 text-white p-2 rounded mt-2">
-              {resendDisabled ? "Wait to resend" : "Error"}
-            </button>
+            {formik.touched.email && formik.errors.email && (
+              <p className="text-red-500 text-sm">{formik.errors.email}</p>
+            )}
           </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Enter your password"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                disabled={otpSent}
+                className="w-full p-2 border rounded pr-10 bg-white"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility("password")}
+                className="absolute right-2 top-2 text-gray-500"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+            {formik.touched.password && formik.errors.password && (
+              <p className="text-red-500 text-sm">{formik.errors.password}</p>
+            )}
+          </div>
+
+          {!isLogin && (
+            <div className="mb-4">
+              <label className="block text-gray-700">Phone Number</label>
+              <input
+                type="text"
+                name="phone"
+                placeholder="Enter your phone number"
+                value={formik.values.phone}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                disabled={otpSent}
+                className="w-full p-2 border rounded bg-white"
+              />
+              {formik.touched.phone && formik.errors.phone && (
+                <p className="text-red-500 text-sm">{formik.errors.phone}</p>
+              )}
+            </div>
+          )}
+
+          {!isLogin && otpSent && (
+            <div className="mb-4">
+              <label className="block text-gray-700">Enter OTP</label>
+              <input
+                type="text"
+                name="otp"
+                placeholder="Enter OTP"
+                value={formik.values.otp}
+                onChange={formik.handleChange}
+                className="w-full p-2 border rounded bg-white"
+              />
+            </div>
+          )}
+
+          <button type="submit" className="w-full bg-brown-light text-white p-2 rounded hover:bg-brown">
+            {isLogin ? "Login" : otpSent ? (isOtpVerified ? "Sign Up" : "Verify OTP") : "Send OTP"}
+          </button>
+        </form>
+
+        {!isLogin && otpSent && !isOtpVerified && (
+          <button onClick={handleResendOTP} className="mt-2 text-sm text-blue-600 hover:underline">
+            Resend OTP
+          </button>
         )}
 
             {isLogin && (
@@ -467,8 +524,8 @@ const Login = () => {
 
                   {changePasswordError && <div className="bg-red-100 text-red-600 p-3 rounded mb-4">{changePasswordError}</div>}
 
-                 {/* Step 1: Email Input */}
-                 {!otpSent && (
+                  {/* Step 1: Email Input */}
+                  {!otpSent && (
                     <form onSubmit={handleEmailSubmit} className="space-y-4">
                       <div className="mb-4">
                         <label className="block text-gray-700">Email</label>
